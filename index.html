@@ -1,15 +1,13 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
+<html lang="es" class="swal2-shown swal2-height-auto"><head>
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aprende Fácil: Mi Escuela Didáctica</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&amp;family=Nunito:wght@400;600;700;800;900&amp;display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script><style>:root{--swal2-outline: 0 0 0 3px rgba(100, 150, 200, 0.5);--swal2-container-padding: 0.625em;--swal2-backdrop: rgba(0, 0, 0, 0.4);--swal2-backdrop-transition: background-color 0.15s;--swal2-width: 32em;--swal2-padding: 0 0 1.25em;--swal2-border: none;--swal2-border-radius: 0.3125rem;--swal2-background: white;--swal2-color: #545454;--swal2-show-animation: swal2-show 0.3s;--swal2-hide-animation: swal2-hide 0.15s forwards;--swal2-icon-zoom: 1;--swal2-title-padding: 0.8em 1em 0;--swal2-html-container-padding: 1em 1.6em 0.3em;--swal2-input-border: 1px solid #d9d9d9;--swal2-input-border-radius: 0.1875em;--swal2-input-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.06), 0 0 0 3px transparent;--swal2-input-background: transparent;--swal2-input-transition: border-color 0.2s, box-shadow 0.2s;--swal2-input-hover-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.06), 0 0 0 3px transparent;--swal2-input-focus-border: 1px solid #b4dbed;--swal2-input-focus-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.06), 0 0 0 3px rgba(100, 150, 200, 0.5);--swal2-progress-step-background: #add8e6;--swal2-validation-message-background: #f0f0f0;--swal2-validation-message-color: #666;--swal2-footer-border-color: #eee;--swal2-footer-background: transparent;--swal2-footer-color: inherit;--swal2-timer-progress-bar-background: rgba(0, 0, 0, 0.3);--swal2-close-button-position: initial;--swal2-close-button-inset: auto;--swal2-close-button-font-size: 2.5em;--swal2-close-button-color: #ccc;--swal2-close-button-transition: color 0.2s, box-shadow 0.2s;--swal2-close-button-outline: initial;--swal2-close-button-box-shadow: inset 0 0 0 3px transparent;--swal2-close-button-focus-box-shadow: inset var(--swal2-outline);--swal2-close-button-hover-transform: none;--swal2-actions-justify-content: center;--swal2-actions-width: auto;--swal2-actions-margin: 1.25em auto 0;--swal2-actions-padding: 0;--swal2-actions-border-radius: 0;--swal2-actions-background: transparent;--swal2-action-button-transition: background-color 0.2s, box-shadow 0.2s;--swal2-action-button-hover: black 10%;--swal2-action-button-active: black 10%;--swal2-confirm-button-box-shadow: none;--swal2-confirm-button-border-radius: 0.25em;--swal2-confirm-button-background-color: #7066e0;--swal2-confirm-button-color: #fff;--swal2-deny-button-box-shadow: none;--swal2-deny-button-border-radius: 0.25em;--swal2-deny-button-background-color: #dc3741;--swal2-deny-button-color: #fff;--swal2-cancel-button-box-shadow: none;--swal2-cancel-button-border-radius: 0.25em;--swal2-cancel-button-background-color: #6e7881;--swal2-cancel-button-color: #fff;--swal2-toast-show-animation: swal2-toast-show 0.5s;--swal2-toast-hide-animation: swal2-toast-hide 0.1s forwards;--swal2-toast-border: none;--swal2-toast-box-shadow: 0 0 1px hsl(0deg 0% 0% / 0.075), 0 1px 2px hsl(0deg 0% 0% / 0.075), 1px 2px 4px hsl(0deg 0% 0% / 0.075), 1px 3px 8px hsl(0deg 0% 0% / 0.075), 2px 4px 16px hsl(0deg 0% 0% / 0.075)}[data-swal2-theme=dark]{--swal2-dark-theme-black: #19191a;--swal2-dark-theme-white: #e1e1e1;--swal2-background: var(--swal2-dark-theme-black);--swal2-color: var(--swal2-dark-theme-white);--swal2-footer-border-color: #555;--swal2-input-background: color-mix(in srgb, var(--swal2-dark-theme-black), var(--swal2-dark-theme-white) 10%);--swal2-validation-message-background: color-mix( in srgb, var(--swal2-dark-theme-black), var(--swal2-dark-theme-white) 10% );--swal2-validation-message-color: var(--swal2-dark-theme-white);--swal2-timer-progress-bar-background: rgba(255, 255, 255, 0.7)}@media(prefers-color-scheme: dark){[data-swal2-theme=auto]{--swal2-dark-theme-black: #19191a;--swal2-dark-theme-white: #e1e1e1;--swal2-background: var(--swal2-dark-theme-black);--swal2-color: var(--swal2-dark-theme-white);--swal2-footer-border-color: #555;--swal2-input-background: color-mix(in srgb, var(--swal2-dark-theme-black), var(--swal2-dark-theme-white) 10%);--swal2-validation-message-background: color-mix( in srgb, var(--swal2-dark-theme-black), var(--swal2-dark-theme-white) 10% );--swal2-validation-message-color: var(--swal2-dark-theme-white);--swal2-timer-progress-bar-background: rgba(255, 255, 255, 0.7)}}body.swal2-shown:not(.swal2-no-backdrop,.swal2-toast-shown){overflow:hidden}body.swal2-height-auto{height:auto !important}body.swal2-no-backdrop .swal2-container{background-color:rgba(0,0,0,0) !important;pointer-events:none}body.swal2-no-backdrop .swal2-container .swal2-popup{pointer-events:auto}body.swal2-no-backdrop .swal2-container .swal2-modal{box-shadow:0 0 10px var(--swal2-backdrop)}body.swal2-toast-shown .swal2-container{box-sizing:border-box;width:360px;max-width:100%;background-color:rgba(0,0,0,0);pointer-events:none}body.swal2-toast-shown .swal2-container.swal2-top{inset:0 auto auto 50%;transform:translateX(-50%)}body.swal2-toast-shown .swal2-container.swal2-top-end,body.swal2-toast-shown .swal2-container.swal2-top-right{inset:0 0 auto auto}body.swal2-toast-shown .swal2-container.swal2-top-start,body.swal2-toast-shown .swal2-container.swal2-top-left{inset:0 auto auto 0}body.swal2-toast-shown .swal2-container.swal2-center-start,body.swal2-toast-shown .swal2-container.swal2-center-left{inset:50% auto auto 0;transform:translateY(-50%)}body.swal2-toast-shown .swal2-container.swal2-center{inset:50% auto auto 50%;transform:translate(-50%, -50%)}body.swal2-toast-shown .swal2-container.swal2-center-end,body.swal2-toast-shown .swal2-container.swal2-center-right{inset:50% 0 auto auto;transform:translateY(-50%)}body.swal2-toast-shown .swal2-container.swal2-bottom-start,body.swal2-toast-shown .swal2-container.swal2-bottom-left{inset:auto auto 0 0}body.swal2-toast-shown .swal2-container.swal2-bottom{inset:auto auto 0 50%;transform:translateX(-50%)}body.swal2-toast-shown .swal2-container.swal2-bottom-end,body.swal2-toast-shown .swal2-container.swal2-bottom-right{inset:auto 0 0 auto}@media print{body.swal2-shown:not(.swal2-no-backdrop,.swal2-toast-shown){overflow-y:scroll !important}body.swal2-shown:not(.swal2-no-backdrop,.swal2-toast-shown)>[aria-hidden=true]{display:none}body.swal2-shown:not(.swal2-no-backdrop,.swal2-toast-shown) .swal2-container{position:static !important}}div:where(.swal2-container){display:grid;position:fixed;z-index:1060;inset:0;box-sizing:border-box;grid-template-areas:"top-start     top            top-end" "center-start  center         center-end" "bottom-start  bottom-center  bottom-end";grid-template-rows:minmax(min-content, auto) minmax(min-content, auto) minmax(min-content, auto);height:100%;padding:var(--swal2-container-padding);overflow-x:hidden;transition:var(--swal2-backdrop-transition);-webkit-overflow-scrolling:touch}div:where(.swal2-container).swal2-backdrop-show,div:where(.swal2-container).swal2-noanimation{background:var(--swal2-backdrop)}div:where(.swal2-container).swal2-backdrop-hide{background:rgba(0,0,0,0) !important}div:where(.swal2-container).swal2-top-start,div:where(.swal2-container).swal2-center-start,div:where(.swal2-container).swal2-bottom-start{grid-template-columns:minmax(0, 1fr) auto auto}div:where(.swal2-container).swal2-top,div:where(.swal2-container).swal2-center,div:where(.swal2-container).swal2-bottom{grid-template-columns:auto minmax(0, 1fr) auto}div:where(.swal2-container).swal2-top-end,div:where(.swal2-container).swal2-center-end,div:where(.swal2-container).swal2-bottom-end{grid-template-columns:auto auto minmax(0, 1fr)}div:where(.swal2-container).swal2-top-start>.swal2-popup{align-self:start}div:where(.swal2-container).swal2-top>.swal2-popup{grid-column:2;place-self:start center}div:where(.swal2-container).swal2-top-end>.swal2-popup,div:where(.swal2-container).swal2-top-right>.swal2-popup{grid-column:3;place-self:start end}div:where(.swal2-container).swal2-center-start>.swal2-popup,div:where(.swal2-container).swal2-center-left>.swal2-popup{grid-row:2;align-self:center}div:where(.swal2-container).swal2-center>.swal2-popup{grid-column:2;grid-row:2;place-self:center center}div:where(.swal2-container).swal2-center-end>.swal2-popup,div:where(.swal2-container).swal2-center-right>.swal2-popup{grid-column:3;grid-row:2;place-self:center end}div:where(.swal2-container).swal2-bottom-start>.swal2-popup,div:where(.swal2-container).swal2-bottom-left>.swal2-popup{grid-column:1;grid-row:3;align-self:end}div:where(.swal2-container).swal2-bottom>.swal2-popup{grid-column:2;grid-row:3;place-self:end center}div:where(.swal2-container).swal2-bottom-end>.swal2-popup,div:where(.swal2-container).swal2-bottom-right>.swal2-popup{grid-column:3;grid-row:3;place-self:end end}div:where(.swal2-container).swal2-grow-row>.swal2-popup,div:where(.swal2-container).swal2-grow-fullscreen>.swal2-popup{grid-column:1/4;width:100%}div:where(.swal2-container).swal2-grow-column>.swal2-popup,div:where(.swal2-container).swal2-grow-fullscreen>.swal2-popup{grid-row:1/4;align-self:stretch}div:where(.swal2-container).swal2-no-transition{transition:none !important}div:where(.swal2-container)[popover]{width:auto;border:0}div:where(.swal2-container) div:where(.swal2-popup){display:none;position:relative;box-sizing:border-box;grid-template-columns:minmax(0, 100%);width:var(--swal2-width);max-width:100%;padding:var(--swal2-padding);border:var(--swal2-border);border-radius:var(--swal2-border-radius);background:var(--swal2-background);color:var(--swal2-color);font-family:inherit;font-size:1rem}div:where(.swal2-container) div:where(.swal2-popup):focus{outline:none}div:where(.swal2-container) div:where(.swal2-popup).swal2-loading{overflow-y:hidden}div:where(.swal2-container) div:where(.swal2-popup).swal2-draggable{cursor:grab}div:where(.swal2-container) div:where(.swal2-popup).swal2-draggable div:where(.swal2-icon){cursor:grab}div:where(.swal2-container) div:where(.swal2-popup).swal2-dragging{cursor:grabbing}div:where(.swal2-container) div:where(.swal2-popup).swal2-dragging div:where(.swal2-icon){cursor:grabbing}div:where(.swal2-container) h2:where(.swal2-title){position:relative;max-width:100%;margin:0;padding:var(--swal2-title-padding);color:inherit;font-size:1.875em;font-weight:600;text-align:center;text-transform:none;overflow-wrap:break-word;cursor:initial}div:where(.swal2-container) div:where(.swal2-actions){display:flex;z-index:1;box-sizing:border-box;flex-wrap:wrap;align-items:center;justify-content:var(--swal2-actions-justify-content);width:var(--swal2-actions-width);margin:var(--swal2-actions-margin);padding:var(--swal2-actions-padding);border-radius:var(--swal2-actions-border-radius);background:var(--swal2-actions-background)}div:where(.swal2-container) div:where(.swal2-loader){display:none;align-items:center;justify-content:center;width:2.2em;height:2.2em;margin:0 1.875em;animation:swal2-rotate-loading 1.5s linear 0s infinite normal;border-width:.25em;border-style:solid;border-radius:100%;border-color:#2778c4 rgba(0,0,0,0) #2778c4 rgba(0,0,0,0)}div:where(.swal2-container) button:where(.swal2-styled){margin:.3125em;padding:.625em 1.1em;transition:var(--swal2-action-button-transition);border:none;box-shadow:0 0 0 3px rgba(0,0,0,0);font-weight:500}div:where(.swal2-container) button:where(.swal2-styled):not([disabled]){cursor:pointer}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-confirm){border-radius:var(--swal2-confirm-button-border-radius);background:initial;background-color:var(--swal2-confirm-button-background-color);box-shadow:var(--swal2-confirm-button-box-shadow);color:var(--swal2-confirm-button-color);font-size:1em}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-confirm):hover{background-color:color-mix(in srgb, var(--swal2-confirm-button-background-color), var(--swal2-action-button-hover))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-confirm):active{background-color:color-mix(in srgb, var(--swal2-confirm-button-background-color), var(--swal2-action-button-active))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-deny){border-radius:var(--swal2-deny-button-border-radius);background:initial;background-color:var(--swal2-deny-button-background-color);box-shadow:var(--swal2-deny-button-box-shadow);color:var(--swal2-deny-button-color);font-size:1em}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-deny):hover{background-color:color-mix(in srgb, var(--swal2-deny-button-background-color), var(--swal2-action-button-hover))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-deny):active{background-color:color-mix(in srgb, var(--swal2-deny-button-background-color), var(--swal2-action-button-active))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-cancel){border-radius:var(--swal2-cancel-button-border-radius);background:initial;background-color:var(--swal2-cancel-button-background-color);box-shadow:var(--swal2-cancel-button-box-shadow);color:var(--swal2-cancel-button-color);font-size:1em}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-cancel):hover{background-color:color-mix(in srgb, var(--swal2-cancel-button-background-color), var(--swal2-action-button-hover))}div:where(.swal2-container) button:where(.swal2-styled):where(.swal2-cancel):active{background-color:color-mix(in srgb, var(--swal2-cancel-button-background-color), var(--swal2-action-button-active))}div:where(.swal2-container) button:where(.swal2-styled):focus-visible{outline:none;box-shadow:var(--swal2-action-button-focus-box-shadow)}div:where(.swal2-container) button:where(.swal2-styled)[disabled]:not(.swal2-loading){opacity:.4}div:where(.swal2-container) button:where(.swal2-styled)::-moz-focus-inner{border:0}div:where(.swal2-container) div:where(.swal2-footer){margin:1em 0 0;padding:1em 1em 0;border-top:1px solid var(--swal2-footer-border-color);background:var(--swal2-footer-background);color:var(--swal2-footer-color);font-size:1em;text-align:center;cursor:initial}div:where(.swal2-container) .swal2-timer-progress-bar-container{position:absolute;right:0;bottom:0;left:0;grid-column:auto !important;overflow:hidden;border-bottom-right-radius:var(--swal2-border-radius);border-bottom-left-radius:var(--swal2-border-radius)}div:where(.swal2-container) div:where(.swal2-timer-progress-bar){width:100%;height:.25em;background:var(--swal2-timer-progress-bar-background)}div:where(.swal2-container) img:where(.swal2-image){max-width:100%;margin:2em auto 1em;cursor:initial}div:where(.swal2-container) button:where(.swal2-close){position:var(--swal2-close-button-position);inset:var(--swal2-close-button-inset);z-index:2;align-items:center;justify-content:center;width:1.2em;height:1.2em;margin-top:0;margin-right:0;margin-bottom:-1.2em;padding:0;overflow:hidden;transition:var(--swal2-close-button-transition);border:none;border-radius:var(--swal2-border-radius);outline:var(--swal2-close-button-outline);background:rgba(0,0,0,0);color:var(--swal2-close-button-color);font-family:monospace;font-size:var(--swal2-close-button-font-size);cursor:pointer;justify-self:end}div:where(.swal2-container) button:where(.swal2-close):hover{transform:var(--swal2-close-button-hover-transform);background:rgba(0,0,0,0);color:#f27474}div:where(.swal2-container) button:where(.swal2-close):focus-visible{outline:none;box-shadow:var(--swal2-close-button-focus-box-shadow)}div:where(.swal2-container) button:where(.swal2-close)::-moz-focus-inner{border:0}div:where(.swal2-container) div:where(.swal2-html-container){z-index:1;justify-content:center;margin:0;padding:var(--swal2-html-container-padding);overflow:auto;color:inherit;font-size:1.125em;font-weight:normal;line-height:normal;text-align:center;overflow-wrap:break-word;word-break:break-word;cursor:initial}div:where(.swal2-container) input:where(.swal2-input),div:where(.swal2-container) input:where(.swal2-file),div:where(.swal2-container) textarea:where(.swal2-textarea),div:where(.swal2-container) select:where(.swal2-select),div:where(.swal2-container) div:where(.swal2-radio),div:where(.swal2-container) label:where(.swal2-checkbox){margin:1em 2em 3px}div:where(.swal2-container) input:where(.swal2-input),div:where(.swal2-container) input:where(.swal2-file),div:where(.swal2-container) textarea:where(.swal2-textarea){box-sizing:border-box;width:auto;transition:var(--swal2-input-transition);border:var(--swal2-input-border);border-radius:var(--swal2-input-border-radius);background:var(--swal2-input-background);box-shadow:var(--swal2-input-box-shadow);color:inherit;font-size:1.125em}div:where(.swal2-container) input:where(.swal2-input).swal2-inputerror,div:where(.swal2-container) input:where(.swal2-file).swal2-inputerror,div:where(.swal2-container) textarea:where(.swal2-textarea).swal2-inputerror{border-color:#f27474 !important;box-shadow:0 0 2px #f27474 !important}div:where(.swal2-container) input:where(.swal2-input):hover,div:where(.swal2-container) input:where(.swal2-file):hover,div:where(.swal2-container) textarea:where(.swal2-textarea):hover{box-shadow:var(--swal2-input-hover-box-shadow)}div:where(.swal2-container) input:where(.swal2-input):focus,div:where(.swal2-container) input:where(.swal2-file):focus,div:where(.swal2-container) textarea:where(.swal2-textarea):focus{border:var(--swal2-input-focus-border);outline:none;box-shadow:var(--swal2-input-focus-box-shadow)}div:where(.swal2-container) input:where(.swal2-input)::placeholder,div:where(.swal2-container) input:where(.swal2-file)::placeholder,div:where(.swal2-container) textarea:where(.swal2-textarea)::placeholder{color:#ccc}div:where(.swal2-container) .swal2-range{margin:1em 2em 3px;background:var(--swal2-background)}div:where(.swal2-container) .swal2-range input{width:80%}div:where(.swal2-container) .swal2-range output{width:20%;color:inherit;font-weight:600;text-align:center}div:where(.swal2-container) .swal2-range input,div:where(.swal2-container) .swal2-range output{height:2.625em;padding:0;font-size:1.125em;line-height:2.625em}div:where(.swal2-container) .swal2-input{height:2.625em;padding:0 .75em}div:where(.swal2-container) .swal2-file{width:75%;margin-right:auto;margin-left:auto;background:var(--swal2-input-background);font-size:1.125em}div:where(.swal2-container) .swal2-textarea{height:6.75em;padding:.75em}div:where(.swal2-container) .swal2-select{min-width:50%;max-width:100%;padding:.375em .625em;background:var(--swal2-input-background);color:inherit;font-size:1.125em}div:where(.swal2-container) .swal2-radio,div:where(.swal2-container) .swal2-checkbox{align-items:center;justify-content:center;background:var(--swal2-background);color:inherit}div:where(.swal2-container) .swal2-radio label,div:where(.swal2-container) .swal2-checkbox label{margin:0 .6em;font-size:1.125em}div:where(.swal2-container) .swal2-radio input,div:where(.swal2-container) .swal2-checkbox input{flex-shrink:0;margin:0 .4em}div:where(.swal2-container) label:where(.swal2-input-label){display:flex;justify-content:center;margin:1em auto 0}div:where(.swal2-container) div:where(.swal2-validation-message){align-items:center;justify-content:center;margin:1em 0 0;padding:.625em;overflow:hidden;background:var(--swal2-validation-message-background);color:var(--swal2-validation-message-color);font-size:1em;font-weight:300}div:where(.swal2-container) div:where(.swal2-validation-message)::before{content:"!";display:inline-block;width:1.5em;min-width:1.5em;height:1.5em;margin:0 .625em;border-radius:50%;background-color:#f27474;color:#fff;font-weight:600;line-height:1.5em;text-align:center}div:where(.swal2-container) .swal2-progress-steps{flex-wrap:wrap;align-items:center;max-width:100%;margin:1.25em auto;padding:0;background:rgba(0,0,0,0);font-weight:600}div:where(.swal2-container) .swal2-progress-steps li{display:inline-block;position:relative}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step{z-index:20;flex-shrink:0;width:2em;height:2em;border-radius:2em;background:#2778c4;color:#fff;line-height:2em;text-align:center}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step.swal2-active-progress-step{background:#2778c4}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step.swal2-active-progress-step~.swal2-progress-step{background:var(--swal2-progress-step-background);color:#fff}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step.swal2-active-progress-step~.swal2-progress-step-line{background:var(--swal2-progress-step-background)}div:where(.swal2-container) .swal2-progress-steps .swal2-progress-step-line{z-index:10;flex-shrink:0;width:2.5em;height:.4em;margin:0 -1px;background:#2778c4}div:where(.swal2-icon){position:relative;box-sizing:content-box;justify-content:center;width:5em;height:5em;margin:2.5em auto .6em;zoom:var(--swal2-icon-zoom);border:.25em solid rgba(0,0,0,0);border-radius:50%;border-color:#000;font-family:inherit;line-height:5em;cursor:default;user-select:none}div:where(.swal2-icon) .swal2-icon-content{display:flex;align-items:center;font-size:3.75em}div:where(.swal2-icon).swal2-error{border-color:#f27474;color:#f27474}div:where(.swal2-icon).swal2-error .swal2-x-mark{position:relative;flex-grow:1}div:where(.swal2-icon).swal2-error [class^=swal2-x-mark-line]{display:block;position:absolute;top:2.3125em;width:2.9375em;height:.3125em;border-radius:.125em;background-color:#f27474}div:where(.swal2-icon).swal2-error [class^=swal2-x-mark-line][class$=left]{left:1.0625em;transform:rotate(45deg)}div:where(.swal2-icon).swal2-error [class^=swal2-x-mark-line][class$=right]{right:1em;transform:rotate(-45deg)}div:where(.swal2-icon).swal2-error.swal2-icon-show{animation:swal2-animate-error-icon .5s}div:where(.swal2-icon).swal2-error.swal2-icon-show .swal2-x-mark{animation:swal2-animate-error-x-mark .5s}div:where(.swal2-icon).swal2-warning{border-color:#f8bb86;color:#f8bb86}div:where(.swal2-icon).swal2-warning.swal2-icon-show{animation:swal2-animate-error-icon .5s}div:where(.swal2-icon).swal2-warning.swal2-icon-show .swal2-icon-content{animation:swal2-animate-i-mark .5s}div:where(.swal2-icon).swal2-info{border-color:#3fc3ee;color:#3fc3ee}div:where(.swal2-icon).swal2-info.swal2-icon-show{animation:swal2-animate-error-icon .5s}div:where(.swal2-icon).swal2-info.swal2-icon-show .swal2-icon-content{animation:swal2-animate-i-mark .8s}div:where(.swal2-icon).swal2-question{border-color:#87adbd;color:#87adbd}div:where(.swal2-icon).swal2-question.swal2-icon-show{animation:swal2-animate-error-icon .5s}div:where(.swal2-icon).swal2-question.swal2-icon-show .swal2-icon-content{animation:swal2-animate-question-mark .8s}div:where(.swal2-icon).swal2-success{border-color:#a5dc86;color:#a5dc86}div:where(.swal2-icon).swal2-success [class^=swal2-success-circular-line]{position:absolute;width:3.75em;height:7.5em;border-radius:50%}div:where(.swal2-icon).swal2-success [class^=swal2-success-circular-line][class$=left]{top:-0.4375em;left:-2.0635em;transform:rotate(-45deg);transform-origin:3.75em 3.75em;border-radius:7.5em 0 0 7.5em}div:where(.swal2-icon).swal2-success [class^=swal2-success-circular-line][class$=right]{top:-0.6875em;left:1.875em;transform:rotate(-45deg);transform-origin:0 3.75em;border-radius:0 7.5em 7.5em 0}div:where(.swal2-icon).swal2-success .swal2-success-ring{position:absolute;z-index:2;top:-0.25em;left:-0.25em;box-sizing:content-box;width:100%;height:100%;border:.25em solid rgba(165,220,134,.3);border-radius:50%}div:where(.swal2-icon).swal2-success .swal2-success-fix{position:absolute;z-index:1;top:.5em;left:1.625em;width:.4375em;height:5.625em;transform:rotate(-45deg)}div:where(.swal2-icon).swal2-success [class^=swal2-success-line]{display:block;position:absolute;z-index:2;height:.3125em;border-radius:.125em;background-color:#a5dc86}div:where(.swal2-icon).swal2-success [class^=swal2-success-line][class$=tip]{top:2.875em;left:.8125em;width:1.5625em;transform:rotate(45deg)}div:where(.swal2-icon).swal2-success [class^=swal2-success-line][class$=long]{top:2.375em;right:.5em;width:2.9375em;transform:rotate(-45deg)}div:where(.swal2-icon).swal2-success.swal2-icon-show .swal2-success-line-tip{animation:swal2-animate-success-line-tip .75s}div:where(.swal2-icon).swal2-success.swal2-icon-show .swal2-success-line-long{animation:swal2-animate-success-line-long .75s}div:where(.swal2-icon).swal2-success.swal2-icon-show .swal2-success-circular-line-right{animation:swal2-rotate-success-circular-line 4.25s ease-in}[class^=swal2]{-webkit-tap-highlight-color:rgba(0,0,0,0)}.swal2-show{animation:var(--swal2-show-animation)}.swal2-hide{animation:var(--swal2-hide-animation)}.swal2-noanimation{transition:none}.swal2-scrollbar-measure{position:absolute;top:-9999px;width:50px;height:50px;overflow:scroll}.swal2-rtl .swal2-close{margin-right:initial;margin-left:0}.swal2-rtl .swal2-timer-progress-bar{right:0;left:auto}.swal2-toast{box-sizing:border-box;grid-column:1/4 !important;grid-row:1/4 !important;grid-template-columns:min-content auto min-content;padding:1em;overflow-y:hidden;border:var(--swal2-toast-border);background:var(--swal2-background);box-shadow:var(--swal2-toast-box-shadow);pointer-events:auto}.swal2-toast>*{grid-column:2}.swal2-toast h2:where(.swal2-title){margin:.5em 1em;padding:0;font-size:1em;text-align:initial}.swal2-toast .swal2-loading{justify-content:center}.swal2-toast input:where(.swal2-input){height:2em;margin:.5em;font-size:1em}.swal2-toast .swal2-validation-message{font-size:1em}.swal2-toast div:where(.swal2-footer){margin:.5em 0 0;padding:.5em 0 0;font-size:.8em}.swal2-toast button:where(.swal2-close){grid-column:3/3;grid-row:1/99;align-self:center;width:.8em;height:.8em;margin:0;font-size:2em}.swal2-toast div:where(.swal2-html-container){margin:.5em 1em;padding:0;overflow:initial;font-size:1em;text-align:initial}.swal2-toast div:where(.swal2-html-container):empty{padding:0}.swal2-toast .swal2-loader{grid-column:1;grid-row:1/99;align-self:center;width:2em;height:2em;margin:.25em}.swal2-toast .swal2-icon{grid-column:1;grid-row:1/99;align-self:center;width:2em;min-width:2em;height:2em;margin:0 .5em 0 0}.swal2-toast .swal2-icon .swal2-icon-content{display:flex;align-items:center;font-size:1.8em;font-weight:bold}.swal2-toast .swal2-icon.swal2-success .swal2-success-ring{width:2em;height:2em}.swal2-toast .swal2-icon.swal2-error [class^=swal2-x-mark-line]{top:.875em;width:1.375em}.swal2-toast .swal2-icon.swal2-error [class^=swal2-x-mark-line][class$=left]{left:.3125em}.swal2-toast .swal2-icon.swal2-error [class^=swal2-x-mark-line][class$=right]{right:.3125em}.swal2-toast div:where(.swal2-actions){justify-content:flex-start;height:auto;margin:0;margin-top:.5em;padding:0 .5em}.swal2-toast button:where(.swal2-styled){margin:.25em .5em;padding:.4em .6em;font-size:1em}.swal2-toast .swal2-success{border-color:#a5dc86}.swal2-toast .swal2-success [class^=swal2-success-circular-line]{position:absolute;width:1.6em;height:3em;border-radius:50%}.swal2-toast .swal2-success [class^=swal2-success-circular-line][class$=left]{top:-0.8em;left:-0.5em;transform:rotate(-45deg);transform-origin:2em 2em;border-radius:4em 0 0 4em}.swal2-toast .swal2-success [class^=swal2-success-circular-line][class$=right]{top:-0.25em;left:.9375em;transform-origin:0 1.5em;border-radius:0 4em 4em 0}.swal2-toast .swal2-success .swal2-success-ring{width:2em;height:2em}.swal2-toast .swal2-success .swal2-success-fix{top:0;left:.4375em;width:.4375em;height:2.6875em}.swal2-toast .swal2-success [class^=swal2-success-line]{height:.3125em}.swal2-toast .swal2-success [class^=swal2-success-line][class$=tip]{top:1.125em;left:.1875em;width:.75em}.swal2-toast .swal2-success [class^=swal2-success-line][class$=long]{top:.9375em;right:.1875em;width:1.375em}.swal2-toast .swal2-success.swal2-icon-show .swal2-success-line-tip{animation:swal2-toast-animate-success-line-tip .75s}.swal2-toast .swal2-success.swal2-icon-show .swal2-success-line-long{animation:swal2-toast-animate-success-line-long .75s}.swal2-toast.swal2-show{animation:var(--swal2-toast-show-animation)}.swal2-toast.swal2-hide{animation:var(--swal2-toast-hide-animation)}@keyframes swal2-show{0%{transform:translate3d(0, -50px, 0) scale(0.9);opacity:0}100%{transform:translate3d(0, 0, 0) scale(1);opacity:1}}@keyframes swal2-hide{0%{transform:translate3d(0, 0, 0) scale(1);opacity:1}100%{transform:translate3d(0, -50px, 0) scale(0.9);opacity:0}}@keyframes swal2-animate-success-line-tip{0%{top:1.1875em;left:.0625em;width:0}54%{top:1.0625em;left:.125em;width:0}70%{top:2.1875em;left:-0.375em;width:3.125em}84%{top:3em;left:1.3125em;width:1.0625em}100%{top:2.8125em;left:.8125em;width:1.5625em}}@keyframes swal2-animate-success-line-long{0%{top:3.375em;right:2.875em;width:0}65%{top:3.375em;right:2.875em;width:0}84%{top:2.1875em;right:0;width:3.4375em}100%{top:2.375em;right:.5em;width:2.9375em}}@keyframes swal2-rotate-success-circular-line{0%{transform:rotate(-45deg)}5%{transform:rotate(-45deg)}12%{transform:rotate(-405deg)}100%{transform:rotate(-405deg)}}@keyframes swal2-animate-error-x-mark{0%{margin-top:1.625em;transform:scale(0.4);opacity:0}50%{margin-top:1.625em;transform:scale(0.4);opacity:0}80%{margin-top:-0.375em;transform:scale(1.15)}100%{margin-top:0;transform:scale(1);opacity:1}}@keyframes swal2-animate-error-icon{0%{transform:rotateX(100deg);opacity:0}100%{transform:rotateX(0deg);opacity:1}}@keyframes swal2-rotate-loading{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}@keyframes swal2-animate-question-mark{0%{transform:rotateY(-360deg)}100%{transform:rotateY(0)}}@keyframes swal2-animate-i-mark{0%{transform:rotateZ(45deg);opacity:0}25%{transform:rotateZ(-25deg);opacity:.4}50%{transform:rotateZ(15deg);opacity:.8}75%{transform:rotateZ(-5deg);opacity:1}100%{transform:rotateX(0);opacity:1}}@keyframes swal2-toast-show{0%{transform:translateY(-0.625em) rotateZ(2deg)}33%{transform:translateY(0) rotateZ(-2deg)}66%{transform:translateY(0.3125em) rotateZ(2deg)}100%{transform:translateY(0) rotateZ(0deg)}}@keyframes swal2-toast-hide{100%{transform:rotateZ(1deg);opacity:0}}@keyframes swal2-toast-animate-success-line-tip{0%{top:.5625em;left:.0625em;width:0}54%{top:.125em;left:.125em;width:0}70%{top:.625em;left:-0.25em;width:1.625em}84%{top:1.0625em;left:.75em;width:.5em}100%{top:1.125em;left:.1875em;width:.75em}}@keyframes swal2-toast-animate-success-line-long{0%{top:1.625em;right:1.375em;width:0}65%{top:1.25em;right:.9375em;width:0}84%{top:.9375em;right:0;width:1.125em}100%{top:.9375em;right:.1875em;width:1.375em}}</style>
 <style>
 :root{
   --verde:#2ecc71;--verde2:#27ae60;--azul:#3498db;--naranja:#f39c12;--naranja2:#e67e22;
@@ -234,24 +232,43 @@ body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:
 @media(max-width:768px){.sidebar{display:none}.cards-grid{grid-template-columns:1fr 1fr}.quiz-opts{grid-template-columns:1fr}}
 @media(max-width:480px){.cards-grid{grid-template-columns:1fr}}
 </style>
+<script src="https://script.google.com/macros/s/AKfycbyq5DPB7Yqkb0NWETo7EorP0n5XfYcB9okRWq-EsjERcJrKlgEorZIHS5et-PJndQKo/exec?action=getAll&amp;callback=__af_1780613766802"></script>
+<script>
+// ── PORTADA INCRUSTADA (generada al descargar) ───────────
+(function(){
+  const _PD = {"emoji":"🦉💛","imagen":"","titulo":"Aprende Fácil","subtitulo":"Mi Escuela Didáctica","mensaje":"🌟 Esta plataforma la creé con todo mi amor\npara mis hijos 5 hijos:\n\"Ian\", \"Dylan\", \"Matias\", \"Milan\" y \"Valery\". \nY para cada niño con ganas de aprender.\nPorque cada niño merece aprender con alegría, sin límites y con las mejores herramientas. 🚀","pie":"Aprende, juega, descubre y crece. ¡El conocimiento es tuyo! 📚","btn":"¡Comenzar a aprender! 🎯"};
+  document.addEventListener('DOMContentLoaded', function(){
+    const iconWrap = document.getElementById('dedIconWrap');
+    if(iconWrap){
+      if(_PD.imagen) iconWrap.innerHTML = '<img src="'+_PD.imagen+'" style="max-width:120px;max-height:120px;border-radius:16px;object-fit:cover">';
+      else iconWrap.innerHTML = '<span style="font-size:52px">'+_PD.emoji+'</span>';
+    }
+    const t=document.getElementById('dedTituloEl'); if(t) t.textContent=_PD.titulo;
+    const s=document.getElementById('dedSubtituloEl'); if(s) s.textContent=_PD.subtitulo;
+    const p=document.getElementById('dedPieEl'); if(p) p.textContent=_PD.pie;
+    const b=document.getElementById('dedBtnEl'); if(b) b.textContent=_PD.btn;
+    const m=document.getElementById('dedMensajeEl'); if(m) m.innerHTML=_PD.mensaje.replace(/\n/g,'<br>');
+    // Guardar en localStorage para que applyPortada() también la use
+    try{ localStorage.setItem('af_portada', JSON.stringify(_PD)); }catch(e){}
+  });
+})();
+</script>
 </head>
-<body>
+<body class="swal2-shown swal2-height-auto" style="padding-right: 7px;">
 
-<div class="cloud-bg" aria-hidden="true">
+<div class="cloud-bg" aria-hidden="true" data-previous-aria-hidden="true">
   <div class="cloud" style="width:120px;height:40px;top:8%;animation-duration:35s;animation-delay:-10s;opacity:.4"></div>
   <div class="cloud" style="width:180px;height:55px;top:20%;animation-duration:50s;animation-delay:-25s;opacity:.3"></div>
 </div>
 
 <!-- DEDICATORIA -->
-<div class="ded-ov" id="dedOv">
+<div class="ded-ov" id="dedOv" aria-hidden="true" style="opacity: 0; transition: opacity 0.3s; display: none;">
   <div class="ded-box">
-    <div id="dedIconWrap" style="font-size:52px;margin-bottom:10px">🦉💛</div>
+    <div id="dedIconWrap" style="font-size:52px;margin-bottom:10px"><span style="font-size:52px">🦉💛</span></div>
     <h2 id="dedTituloEl">Aprende Fácil</h2>
     <p id="dedSubtituloEl" style="font-size:15px;color:#2d3436;font-weight:700;margin-bottom:12px">Mi Escuela Didáctica</p>
     <div class="ded-msg">
-      <p id="dedMensajeEl">🌟 Esta plataforma la creé con todo mi amor<br>
-      <strong>para mis hijos y para todos los niños<br>con ganas de aprender.</strong><br><br>
-      Porque cada niño merece aprender con alegría,<br>sin límites y con las mejores herramientas. 🚀</p>
+      <p id="dedMensajeEl">🌟 Esta plataforma la creé con todo mi amor<br>para mis hijos 5 hijos:<br>"Ian", "Dylan", "Matias", "Milan" y "Valery". <br>Y para cada niño con ganas de aprender.<br>Porque cada niño merece aprender con alegría, sin límites y con las mejores herramientas. 🚀</p>
     </div>
     <p id="dedPieEl" style="font-size:13px;color:#636e72;margin-bottom:20px">Aprende, juega, descubre y crece. ¡El conocimiento es tuyo! 📚</p>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
@@ -262,7 +279,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:
 </div>
 
 <!-- SUGERENCIAS -->
-<div class="sug-ov" id="sugOv">
+<div class="sug-ov" id="sugOv" aria-hidden="true">
   <div class="sug-box">
     <button onclick="cerrarSug()" style="position:absolute;top:14px;right:16px;background:#f0f0f0;border:none;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer">✕</button>
     <div style="text-align:center;margin-bottom:18px">
@@ -294,7 +311,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:
 </div>
 
 <!-- HEADER -->
-<header class="main-header">
+<header class="main-header" aria-hidden="true">
   <div class="header-inner">
     <div class="logo-box" onclick="showView('dashboard')">
       <div class="logo-owl">🦉</div>
@@ -305,13 +322,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:
     </div>
     <div class="nivel-btns">
       <button class="nivel-btn" onclick="setNivel('inicial')"><span>🌱</span> INICIAL</button>
-      <button class="nivel-btn active" onclick="setNivel('primaria')"><span>🎒</span> PRIMARIA</button>
-      <button class="nivel-btn" onclick="setNivel('secundaria')"><span>🎓</span> SECUNDARIA</button>
+      <button class="nivel-btn" onclick="setNivel('primaria')"><span>🎒</span> PRIMARIA</button>
+      <button class="nivel-btn active" onclick="setNivel('secundaria')"><span>🎓</span> SECUNDARIA</button>
     </div>
     <div class="header-actions">
-      <div id="syncBar" style="font-size:12px;color:rgba(255,255,255,.8);display:flex;align-items:center;gap:5px;padding:6px 12px;background:rgba(255,255,255,.1);border-radius:20px">
-        <i class="fas fa-cloud"></i> Drive
-      </div>
+      <div id="syncBar" style="font-size:12px;color:rgba(255,255,255,.8);display:flex;align-items:center;gap:5px;padding:6px 12px;background:rgba(255,255,255,.1);border-radius:20px"><i class="fas fa-check-circle"></i> Drive ✓ 05:56 p. m.</div>
       <button class="btn-sync" onclick="cargarDrive()" title="Sync Drive"><i class="fas fa-sync-alt"></i></button>
       <button class="btn-ia-top" onclick="toggleAI()"><i class="fab fa-google"></i> IA</button>
       <button class="btn-admin-top" onclick="showAdminLogin()"><i class="fas fa-lock"></i> Admin</button>
@@ -319,30 +334,92 @@ body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:
   </div>
 </header>
 
-<div class="app-body">
+<div class="app-body" aria-hidden="true">
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-title" id="sidebarTitle">📚 Primaria</div>
-    <div id="gradosBtns"></div>
+    <div class="sidebar-title" id="sidebarTitle">🎓 Secundaria</div>
+    <div id="gradosBtns">
+    <button class="grado-btn " onclick="setGrado(1)">
+      <span style="font-size:18px;width:24px;text-align:center">🍎</span>
+      1° Año
+    </button>
+    <button class="grado-btn " onclick="setGrado(2)">
+      <span style="font-size:18px;width:24px;text-align:center">✏️</span>
+      2° Año
+    </button>
+    <button class="grado-btn " onclick="setGrado(3)">
+      <span style="font-size:18px;width:24px;text-align:center">📐</span>
+      3° Año
+    </button>
+    <button class="grado-btn active" onclick="setGrado(4)">
+      <span style="font-size:18px;width:24px;text-align:center">🌍</span>
+      4° Año
+    </button>
+    <button class="grado-btn " onclick="setGrado(5)">
+      <span style="font-size:18px;width:24px;text-align:center">⚗️</span>
+      5° Año
+    </button></div>
   </aside>
 
   <main class="main-content">
     <!-- DASHBOARD -->
-    <div class="view active" id="view-dashboard">
-      <div class="section-header" id="secHdr" style="--g1:#3498db;--g2:#2ecc71">
+    <div class="view" id="view-dashboard">
+      <div class="section-header" id="secHdr" style="--g1: #9b59b6; --g2: #e74c3c;">
         <div class="icon">🎒</div>
         <div>
-          <h2 id="secTitle">Primaria — 3° Grado</h2>
-          <p id="secSub">Elige un curso y empieza a aprender</p>
+          <h2 id="secTitle"> Secundaria — 4° Año</h2>
+          <p id="secSub">3 temas · 0 fórmulas</p>
         </div>
         <button onclick="showView('quiz')" style="margin-left:auto;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);color:#fff;border-radius:30px;padding:9px 18px;cursor:pointer;font-family:var(--font);font-weight:700;font-size:13px">
           <i class="fas fa-bolt"></i> Quiz Rápido
         </button>
       </div>
-      <div class="course-tabs" id="courseTabs"></div>
+      <div class="course-tabs" id="courseTabs"><button class="course-tab active" data-curso="matematica" onclick="setCurso('matematica')">🔢 Matemática</button></div>
       <div class="slabel"><i class="fas fa-book-open"></i> Temas del Curso</div>
-      <div class="cards-grid fade-in" id="cardsGrid"></div>
+      <div class="cards-grid fade-in" id="cardsGrid"><div class="topic-card fade-in" style="animation-delay:0s">
+    <div class="card-img" style="background:#d6eaf8">🧊</div>
+    <div class="card-body">
+      <div class="card-tag" style="color:#2980b9">🔢 Matemática</div>
+      <div class="card-title">Geometría del Espacio</div>
+      <div class="card-sub">Sólidos y volúmenes</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progreso</span><span>48%</span></div>
+        <div class="progress"><div class="progress-bar" style="width: 48%; background: rgb(41, 128, 185);"></div></div>
+      </div>
+      <button class="btn-aprender" onclick="abrirLeccion('Geometría del Espacio','🧊','#2980b9')">
+        <i class="fas fa-book-open"></i> ¡APRENDER!
+      </button>
+    </div>
+  </div><div class="topic-card fade-in" style="animation-delay:0.08s">
+    <div class="card-img" style="background:#e8daef">🔣</div>
+    <div class="card-body">
+      <div class="card-tag" style="color:#8e44ad">🔢 Matemática</div>
+      <div class="card-title">Polinomios avanzados</div>
+      <div class="card-sub">Teoremas y raíces</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progreso</span><span>40%</span></div>
+        <div class="progress"><div class="progress-bar" style="width: 40%; background: rgb(142, 68, 173);"></div></div>
+      </div>
+      <button class="btn-aprender" onclick="abrirLeccion('Polinomios avanzados','🔣','#8e44ad')">
+        <i class="fas fa-book-open"></i> ¡APRENDER!
+      </button>
+    </div>
+  </div><div class="topic-card fade-in" style="animation-delay:0.16s">
+    <div class="card-img" style="background:#d5f5e3">📈</div>
+    <div class="card-body">
+      <div class="card-tag" style="color:#27ae60">🔢 Matemática</div>
+      <div class="card-title">Funciones y Gráficas</div>
+      <div class="card-sub">Dominio, rango, imagen</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Progreso</span><span>52%</span></div>
+        <div class="progress"><div class="progress-bar" style="width: 52%; background: rgb(39, 174, 96);"></div></div>
+      </div>
+      <button class="btn-aprender" onclick="abrirLeccion('Funciones y Gráficas','📈','#27ae60')">
+        <i class="fas fa-book-open"></i> ¡APRENDER!
+      </button>
+    </div>
+  </div></div>
       <div class="slabel">🧮 Atajos y Fórmulas</div>
-      <div class="formulas-grid fade-in" id="formulasGrid"></div>
+      <div class="formulas-grid fade-in" id="formulasGrid"><div class="empty-state"><i class="fas fa-calculator"></i><p>Sin fórmulas para este grado/curso</p></div></div>
     </div>
 
     <!-- LESSON -->
@@ -405,22 +482,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:
     </div>
 
     <!-- ADMIN -->
-    <div class="view" id="view-admin">
+    <div class="view active" id="view-admin">
       <div class="admin-panel">
         <div class="admin-hdr">
           <i class="fas fa-cog fa-spin" style="font-size:28px"></i>
           <div><h3>Panel de Administrador</h3><p style="opacity:.7;font-size:13px;margin:0">Gestión completa de contenido</p></div>
           <button onclick="showView('dashboard')" style="margin-left:auto;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);color:#fff;border-radius:20px;padding:7px 16px;cursor:pointer;font-family:var(--font);font-weight:700;font-size:13px">← Volver</button>
         </div>
-        <div class="data-stats" id="adminStats"></div>
+        <div class="data-stats" id="adminStats">
+    <div class="stat-card" style="--c1:#3498db;--c2:#2980b9"><div class="num">20</div><div class="lbl">Preguntas</div></div>
+    <div class="stat-card" style="--c1:#2ecc71;--c2:#27ae60"><div class="num">8</div><div class="lbl">Fórmulas</div></div>
+    <div class="stat-card" style="--c1:#9b59b6;--c2:#8e44ad"><div class="num">0</div><div class="lbl">Temas editados</div></div>
+    <div class="stat-card" style="--c1:#e67e22;--c2:#d35400"><div class="num">0</div><div class="lbl">Imágenes</div></div></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;border-bottom:2px solid #f0f0f0;padding-bottom:12px">
-          <button class="atab on" id="atab-excel" onclick="switchTab('excel',this)"><i class="fas fa-file-excel"></i> Carga Excel</button>
+          <button class="atab" id="atab-excel" onclick="switchTab('excel',this)"><i class="fas fa-file-excel"></i> Carga Excel</button>
           <button class="atab" id="atab-contenido" onclick="switchTab('contenido',this)"><i class="fas fa-edit"></i> Modificar Contenido</button>
           <button class="atab" id="atab-datos" onclick="switchTab('datos',this)"><i class="fas fa-database"></i> Ver Datos</button>
-          <button class="atab" id="atab-portada" onclick="switchTab('portada',this)"><i class="fas fa-star"></i> Editar Portada</button>
+          <button class="atab on" id="atab-portada" onclick="switchTab('portada',this)"><i class="fas fa-star"></i> Editar Portada</button>
         </div>
         <!-- TAB EXCEL -->
-        <div id="apanel-excel">
+        <div id="apanel-excel" style="display: none;">
           <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Sube un Excel con <strong>6 tipos</strong> de contenido: Pregunta, Atajo, Teoria, DatoCurioso, Video, Paso.</p>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
             <button class="btn-dl" onclick="dlPlantilla()"><i class="fas fa-download"></i> Descargar Plantilla</button>
@@ -453,19 +534,58 @@ body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:
             <div>
               <label style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">NIVEL</label>
               <select id="editNivel" onchange="updEditGrados()" style="width:100%;padding:9px 12px;border-radius:10px;border:2px solid #dfe6e9;font-family:var(--font);font-size:13px;outline:none">
-                <option value="inicial">Inicial</option><option value="primaria" selected>Primaria</option><option value="secundaria">Secundaria</option>
+                <option value="inicial">Inicial</option><option value="primaria" selected="">Primaria</option><option value="secundaria">Secundaria</option>
               </select>
             </div>
             <div>
               <label style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">GRADO</label>
-              <select id="editGrado" onchange="updEditTemas()" style="width:100%;padding:9px 12px;border-radius:10px;border:2px solid #dfe6e9;font-family:var(--font);font-size:13px;outline:none"></select>
+              <select id="editGrado" onchange="updEditTemas()" style="width:100%;padding:9px 12px;border-radius:10px;border:2px solid #dfe6e9;font-family:var(--font);font-size:13px;outline:none"><option value="1">1° Grado</option><option value="2">2° Grado</option><option value="3">3° Grado</option><option value="4">4° Grado</option><option value="5">5° Grado</option><option value="6">6° Grado</option></select>
             </div>
             <div>
               <label style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">TEMA</label>
-              <select id="editTema" onchange="loadEditor()" style="width:100%;padding:9px 12px;border-radius:10px;border:2px solid #dfe6e9;font-family:var(--font);font-size:13px;outline:none"></select>
+              <select id="editTema" onchange="loadEditor()" style="width:100%;padding:9px 12px;border-radius:10px;border:2px solid #dfe6e9;font-family:var(--font);font-size:13px;outline:none"><option value="Números del 1 al 100">Números del 1 al 100</option><option value="Sumas y Restas">Sumas y Restas</option><option value="Medidas de longitud">Medidas de longitud</option><option value="Vocales y consonantes">Vocales y consonantes</option><option value="Seres vivos">Seres vivos</option></select>
             </div>
           </div>
-          <div id="editorArea"></div>
+          <div id="editorArea">
+  <div class="edsec"><h4 style="color:var(--azul)"><i class="fas fa-book-open"></i> Teoría</h4>
+  <div id="edT"></div>
+  <button class="btn-add" onclick="edAdd('teoria')"><i class="fas fa-plus"></i> Añadir párrafo</button></div>
+
+  <div class="edsec"><h4 style="color:var(--verde)"><i class="fas fa-list-ol"></i> Pasos</h4>
+  <div id="edP"></div>
+  <button class="btn-add" onclick="edAdd('pasos')"><i class="fas fa-plus"></i> Añadir paso</button></div>
+
+  <div class="edsec"><h4 style="color:var(--morado,#9b59b6)"><i class="fas fa-bolt"></i> Atajos y fórmulas</h4>
+  <div id="edA"></div>
+  <button class="btn-add" onclick="edAdd('atajos')"><i class="fas fa-plus"></i> Añadir atajo</button></div>
+
+  <div class="edsec"><h4 style="color:var(--naranja)"><i class="fas fa-lightbulb"></i> Dato curioso</h4>
+  <textarea class="edta" style="width:100%;min-height:70px" placeholder="Dato curioso o truco..." oninput="window._ed.datoCurioso=this.value"></textarea></div>
+
+  <div class="edsec"><h4 style="color:var(--rojo)"><i class="fas fa-play-circle"></i> Video YouTube</h4>
+  <input class="edin" id="edVid" style="width:100%" value="" placeholder="https://www.youtube.com/embed/..." oninput="window._ed.video=this.value">
+  </div>
+
+  <div class="edsec"><h4 style="color:var(--azul)"><i class="fas fa-image"></i> Imagen del diagrama</h4>
+  <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Sube una imagen para reemplazar el diagrama SVG.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div>
+      <div class="upload-zone" style="min-height:120px;padding:16px;margin-bottom:8px" onclick="document.getElementById('imgFileEd').click()">
+        <i class="fas fa-cloud-upload-alt" style="font-size:28px;color:var(--azul);display:block;margin-bottom:6px"></i>
+        <p style="font-size:12px;margin:0">Clic para subir imagen</p>
+        <input type="file" id="imgFileEd" style="display:none" accept="image/*" onchange="prevImgEd(this)">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="saveImgEd()" style="flex:1;background:linear-gradient(135deg,var(--verde),var(--cyan));color:#fff;border:none;border-radius:20px;padding:8px;font-weight:800;font-size:12px;cursor:pointer;font-family:var(--font)"><i class="fas fa-save"></i> Guardar</button>
+        <button onclick="delImgEd()" style="background:none;border:2px solid var(--rojo);color:var(--rojo);border-radius:20px;padding:8px 12px;font-weight:800;font-size:12px;cursor:pointer;font-family:var(--font)"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+    <div id="imgPrevEd" style="background:#f8f9fa;border-radius:12px;padding:10px;min-height:120px;display:flex;align-items:center;justify-content:center;border:2px dashed #dfe6e9;text-align:center;color:var(--muted);font-size:12px">
+      Sin imagen — se usa el SVG
+    </div>
+  </div></div>
+
+  <button class="btn-save" onclick="saveEditor()"><i class="fas fa-save"></i> Guardar todo: "Números del 1 al 100"</button></div>
         </div>
         <!-- TAB DATOS -->
         <div id="apanel-datos" style="display:none">
@@ -478,7 +598,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:
         </div>
 
         <!-- TAB PORTADA -->
-        <div id="apanel-portada" style="display:none">
+        <div id="apanel-portada" style="display: block;">
           <div class="edsec">
             <h4 style="color:var(--morado)"><i class="fas fa-image"></i> Imagen / Emoji de portada</h4>
             <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Puedes usar un emoji grande o subir una imagen. Si subes imagen reemplaza el emoji.</p>
@@ -499,9 +619,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:
               </div>
               <div>
                 <label style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px">VISTA PREVIA</label>
-                <div id="dedImgPrev" style="background:#f8f9fa;border-radius:14px;padding:16px;text-align:center;min-height:120px;display:flex;align-items:center;justify-content:center;border:2px dashed #dfe6e9">
-                  <span style="font-size:52px">🦉💛</span>
-                </div>
+                <div id="dedImgPrev" style="background:#f8f9fa;border-radius:14px;padding:16px;text-align:center;min-height:120px;display:flex;align-items:center;justify-content:center;border:2px dashed #dfe6e9"><span style="font-size:52px">🦉💛</span></div>
               </div>
             </div>
           </div>
@@ -556,7 +674,7 @@ Porque cada niño merece aprender con alegría, sin límites y con las mejores h
               4️⃣ Arrastra el archivo descargado y haz clic en <strong>"Commit changes"</strong><br>
               5️⃣ ¡En 1-2 minutos todos verán tu portada actualizada! ✅
             </div>
-            <button onclick="descargarHTML()" style="background:linear-gradient(135deg,#00b894,#00cec9);color:#fff;border:none;border-radius:30px;padding:13px 28px;font-family:var(--display);font-size:16px;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,184,148,.3);transition:all .2s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+            <button onclick="descargarHTML()" style="background: linear-gradient(135deg, rgb(0, 184, 148), rgb(0, 206, 201)); color: rgb(255, 255, 255); border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; border-radius: 30px; padding: 13px 28px; font-family: var(--display); font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: rgba(0, 184, 148, 0.3) 0px 4px 16px; transition: 0.2s; transform: scale(1.03);" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
               <i class="fas fa-download"></i> ⬇️ Descargar index.html
             </button>
           </div>
@@ -568,7 +686,7 @@ Porque cada niño merece aprender con alegría, sin límites y con las mejores h
 </div>
 
 <!-- AI FLOAT -->
-<div class="ai-float">
+<div class="ai-float" aria-hidden="true">
   <div class="ai-chat-box" id="aiBox">
     <div class="ai-chat-hdr">
       <span style="font-size:20px">🤖</span>
@@ -587,12 +705,10 @@ Porque cada niño merece aprender con alegría, sin límites y con las mejores h
 </div>
 
 <!-- BOTÓN SUGERENCIAS FLOTANTE -->
-<button onclick="abrirSug()" title="Sugerencias y calificación"
-  style="position:fixed;bottom:100px;right:28px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#00cec9,#55efc4);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 16px rgba(0,206,201,.4);z-index:100;transition:all .2s"
-  onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">💬</button>
+<button onclick="abrirSug()" title="Sugerencias y calificación" style="position:fixed;bottom:100px;right:28px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#00cec9,#55efc4);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 16px rgba(0,206,201,.4);z-index:100;transition:all .2s" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'" aria-hidden="true">💬</button>
 
 <!-- ADMIN LOGIN -->
-<div class="modal-ov" id="adminModal">
+<div class="modal-ov" id="adminModal" aria-hidden="true">
   <div class="modal-bx">
     <h3>🔐 Panel Admin</h3>
     <p style="text-align:center;color:var(--muted);font-size:13px;margin-bottom:16px">Ingresa la contraseña para continuar</p>
@@ -602,10 +718,10 @@ Porque cada niño merece aprender con alegría, sin límites y con las mejores h
   </div>
 </div>
 
-<div class="toast-custom" id="toast"></div>
+<div class="toast-custom" id="toast" aria-hidden="true">✅ Datos cargados desde Drive</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" aria-hidden="true"></script>
+<script aria-hidden="true">
 // ── CONSTANTES ──────────────────────────────────────────
 const WA_NUM  = '51956477462';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyq5DPB7Yqkb0NWETo7EorP0n5XfYcB9okRWq-EsjERcJrKlgEorZIHS5et-PJndQKo/exec';
@@ -1574,5 +1690,11 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(()=>{ setSyncBar('sync','Conectando Drive...'); cargarDrive(); },2500);
 });
 </script>
-</body>
-</html>
+
+
+<div class="swal2-container swal2-center swal2-backdrop-show" data-swal2-theme="light"><div aria-labelledby="swal2-title" aria-describedby="swal2-html-container" class="swal2-popup swal2-modal swal2-icon-success" tabindex="-1" role="dialog" aria-live="assertive" aria-modal="true" style="opacity: 0 !important; display: grid;"><button type="button" class="swal2-close" aria-label="Close this dialog" style="display: none;">×</button><ul class="swal2-progress-steps" style="display: none;"></ul><div class="swal2-icon swal2-success swal2-icon-show" style="display: flex;"><div class="swal2-success-circular-line-left" style="background-color: rgb(255, 255, 255);"></div>
+  <span class="swal2-success-line-tip"></span> <span class="swal2-success-line-long"></span>
+  <div class="swal2-success-ring"></div>
+  <div class="swal2-success-fix" style="background-color: rgb(255, 255, 255);"></div>
+  <div class="swal2-success-circular-line-right" style="background-color: rgb(255, 255, 255);"></div>
+</div><img class="swal2-image" style="display: none;"><h2 class="swal2-title" id="swal2-title" style="display: block;">¡Portada guardada! 🎉</h2><div class="swal2-html-container" id="swal2-html-container" style="display: block;">Los cambios se aplicarán la próxima vez que se muestre la portada.</div><input id="swal2-input" class="swal2-input" style="display: none;"><input type="file" class="swal2-file" style="display: none;"><div class="swal2-range" style="display: none;"><input type="range"><output></output></div><select id="swal2-select" class="swal2-select" style="display: none;"></select><div class="swal2-radio" style="display: none;"></div><label class="swal2-checkbox" style="display: none;"><input type="checkbox" id="swal2-checkbox"><span class="swal2-label"></span></label><textarea id="swal2-textarea" class="swal2-textarea" style="display: none;"></textarea><div class="swal2-validation-message" id="swal2-validation-message" style="display: none;"></div><div class="swal2-actions" style="display: none;"><div class="swal2-loader"></div><button type="button" class="swal2-confirm swal2-styled" aria-label="" style="display: none; --swal2-action-button-focus-box-shadow: 0 0 0 3px rgba(112, 102, 224, 0.5);">OK</button><button type="button" class="swal2-deny swal2-styled" aria-label="" style="display: none; --swal2-action-button-focus-box-shadow: 0 0 0 3px rgba(220, 55, 65, 0.5);">No</button><button type="button" class="swal2-cancel swal2-styled" aria-label="" style="display: none; --swal2-action-button-focus-box-shadow: 0 0 0 3px rgba(110, 120, 129, 0.5);">Cancel</button></div><div class="swal2-footer" style="display: none;"></div><div class="swal2-timer-progress-bar-container"><div class="swal2-timer-progress-bar" style="display: none;"></div></div></div></div></body></html>
