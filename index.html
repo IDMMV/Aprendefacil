@@ -538,6 +538,28 @@ Porque cada niño merece aprender con alegría, sin límites y con las mejores h
             <button onclick="previsualizarPortada()" style="background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:#fff;border:none;border-radius:20px;padding:11px 22px;font-weight:800;font-size:14px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:8px"><i class="fas fa-eye"></i> Previsualizar</button>
             <button onclick="resetPortada()" style="background:none;border:2px solid var(--muted);color:var(--muted);border-radius:20px;padding:11px 22px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font)"><i class="fas fa-undo"></i> Restaurar original</button>
           </div>
+
+          <!-- CAJA DESCARGA -->
+          <div style="margin-top:20px;background:linear-gradient(135deg,#f0f7ff,#e8f4fd);border-radius:16px;padding:20px;border:2px dashed #74b9ff">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+              <span style="font-size:32px">📥</span>
+              <div>
+                <div style="font-family:var(--display);font-size:17px;color:#2d3436">Descargar para subir a GitHub</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:2px">Genera el archivo <code style="background:#fff;padding:2px 6px;border-radius:4px;font-size:11px">index.html</code> con todos tus cambios incrustados</div>
+              </div>
+            </div>
+            <div style="background:#fff;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#444;line-height:1.8;border:1px solid #dfe6e9">
+              <strong>Pasos para publicar:</strong><br>
+              1️⃣ Haz clic en <strong>"⬇️ Descargar index.html"</strong><br>
+              2️⃣ Ve a <strong>github.com</strong> → tu repositorio<br>
+              3️⃣ Haz clic en el archivo <code style="background:#f0f0f0;padding:1px 5px;border-radius:3px">index.html</code> → botón ✏️ editar → luego el ícono 📤 subir<br>
+              4️⃣ Arrastra el archivo descargado y haz clic en <strong>"Commit changes"</strong><br>
+              5️⃣ ¡En 1-2 minutos todos verán tu portada actualizada! ✅
+            </div>
+            <button onclick="descargarHTML()" style="background:linear-gradient(135deg,#00b894,#00cec9);color:#fff;border:none;border-radius:30px;padding:13px 28px;font-family:var(--display);font-size:16px;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,184,148,.3);transition:all .2s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+              <i class="fas fa-download"></i> ⬇️ Descargar index.html
+            </button>
+          </div>
         </div>
 
       </div>
@@ -1436,6 +1458,74 @@ function resetPortada(){
   loadPortadaEditor();
   applyPortada();
   toast('Portada restaurada al original');
+}
+
+function descargarHTML(){
+  // Primero guardar los cambios actuales
+  guardarPortada();
+
+  // Obtener el HTML completo de la página actual
+  const d = getDedData();
+
+  // Escapar caracteres especiales para insertar en HTML/JS
+  const esc = s => String(s||'').replace(/\\/g,'\\\\').replace(/`/g,'\\`').replace(/\$/g,'\\$');
+
+  // Tomar el HTML actual de la página
+  let html = document.documentElement.outerHTML;
+
+  // Inyectar un script de arranque que aplica la portada ANTES de que corra el init,
+  // reemplazando los valores directamente en el DOM estático.
+  // Buscamos el cierre </head> e insertamos un script inline con los datos guardados.
+  const portadaScript = `
+<script>
+// ── PORTADA INCRUSTADA (generada al descargar) ───────────
+(function(){
+  const _PD = ${JSON.stringify(d)};
+  document.addEventListener('DOMContentLoaded', function(){
+    const iconWrap = document.getElementById('dedIconWrap');
+    if(iconWrap){
+      if(_PD.imagen) iconWrap.innerHTML = '<img src="'+_PD.imagen+'" style="max-width:120px;max-height:120px;border-radius:16px;object-fit:cover">';
+      else iconWrap.innerHTML = '<span style="font-size:52px">'+_PD.emoji+'</span>';
+    }
+    const t=document.getElementById('dedTituloEl'); if(t) t.textContent=_PD.titulo;
+    const s=document.getElementById('dedSubtituloEl'); if(s) s.textContent=_PD.subtitulo;
+    const p=document.getElementById('dedPieEl'); if(p) p.textContent=_PD.pie;
+    const b=document.getElementById('dedBtnEl'); if(b) b.textContent=_PD.btn;
+    const m=document.getElementById('dedMensajeEl'); if(m) m.innerHTML=_PD.mensaje.replace(/\\n/g,'<br>');
+    // Guardar en localStorage para que applyPortada() también la use
+    try{ localStorage.setItem('af_portada', JSON.stringify(_PD)); }catch(e){}
+  });
+})();
+<\/script>`;
+
+  // Insertar antes de </head>
+  html = html.replace('</head>', portadaScript + '\n</head>');
+
+  // Crear el blob y descargarlo
+  const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'index.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  Swal.fire({
+    icon:'success',
+    title:'¡Archivo descargado! 📥',
+    html:`<div style="text-align:left;font-size:14px;line-height:2">
+      <strong>Pasos para publicarlo:</strong><br>
+      1️⃣ Ve a <strong>github.com</strong> → tu repositorio<br>
+      2️⃣ Clic en el archivo <code>index.html</code> → ícono ✏️<br>
+      3️⃣ Clic en el ícono 📤 (arriba a la derecha del editor)<br>
+      4️⃣ Arrastra el <code>index.html</code> descargado<br>
+      5️⃣ Clic en <strong>"Commit changes"</strong> → ¡listo! ✅
+    </div>`,
+    confirmButtonColor:'#00b894',
+    confirmButtonText:'¡Entendido!'
+  });
 }
 
 // ── DEDICATORIA & SUGERENCIAS ────────────────────────────
