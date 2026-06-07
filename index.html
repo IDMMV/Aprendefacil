@@ -13,32 +13,48 @@
 :root{--verde:#2ecc71;--verde2:#27ae60;--azul:#3498db;--naranja:#f39c12;--naranja2:#e67e22;--rojo:#e74c3c;--morado:#9b59b6;--cyan:#00cec9;--amarillo:#fdcb6e;--bg:#f0f7ff;--card:#fff;--texto:#2d3436;--muted:#636e72;--font:'Nunito',sans-serif;--display:'Fredoka One',cursive;--shadow:0 6px 24px rgba(0,0,0,0.10);--shadow2:0 12px 40px rgba(0,0,0,0.15)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:hidden}
-.cloud-bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
-.cloud{position:absolute;background:rgba(255,255,255,0.5);border-radius:50px;animation:drift linear infinite}
-@keyframes drift{from{transform:translateX(-200px)}to{transform:translateX(calc(100vw + 200px))}}
 
+/* HEADER */
 .main-header{background:linear-gradient(135deg,#74b9ff 0%,#a29bfe 40%,#fd79a8 100%);padding:12px 20px;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.2)}
 .header-inner{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.logo-box{display:flex;align-items:center;gap:10px;text-decoration:none;cursor:pointer}
-.logo-text .big{font-size:20px;font-family:var(--display);color:#fff;display:block}
-.nivel-btn{padding:10px 22px;border-radius:50px;border:3px solid rgba(255,255,255,0.5);background:rgba(255,255,255,0.2);color:#fff;font-family:var(--display);cursor:pointer;transition:0.25s}
-.nivel-btn.active{background:#fff;color:var(--azul);border-color:#fff}
+.logo-box{display:flex;align-items:center;gap:10px;text-decoration:none;cursor:pointer;color:#fff}
+.logo-text .big{font-size:22px;font-family:var(--display);display:block}
 
-.sidebar{width:200px;background:linear-gradient(180deg,#fff8f0,#ffe8d6);border-right:3px solid #ffeaa7;padding:16px 10px;position:sticky;top:70px;height:calc(100vh - 70px);overflow-y:auto}
-.grado-btn{display:flex;align-items:center;gap:8px;width:100%;padding:10px;border-radius:12px;border:2px solid transparent;background:rgba(255,255,255,0.7);margin-bottom:6px;font-weight:700;cursor:pointer}
-.grado-btn.active{background:var(--naranja);color:#fff}
+/* NIVELES */
+.nivel-btns{display:flex;gap:8px}
+.nivel-btn{padding:8px 20px;border-radius:50px;border:3px solid rgba(255,255,255,0.5);background:rgba(255,255,255,0.2);color:#fff;font-family:var(--display);cursor:pointer;transition:0.25s}
+.nivel-btn.active{background:#fff;color:var(--azul);border-color:#fff;transform:scale(1.05)}
 
-.view{display:none}.view.active{display:block}
-.main-content{flex:1;padding:20px}
+/* SIDEBAR */
+.sidebar{width:200px;background:linear-gradient(180deg,#fff8f0,#ffe8d6);border-right:3px solid #ffeaa7;padding:16px 10px;height:calc(100vh - 70px);position:sticky;top:70px}
+.grado-btn{display:flex;align-items:center;gap:8px;width:100%;padding:10px;border-radius:12px;border:2px solid transparent;background:rgba(255,255,255,0.7);margin-bottom:6px;font-weight:700;cursor:pointer;transition:0.2s}
+.grado-btn.active{background:var(--naranja);color:#fff;box-shadow:var(--shadow)}
 
-/* ADMIN PANEL */
-.admin-card-lesson { background: #fff; border-radius: 15px; border-left: 6px solid var(--azul); border: 1px solid #eee; margin-bottom: 10px; transition: 0.2s; }
-.admin-card-lesson:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
-.paste-area { width: 100%; height: 150px; border: 2px dashed #cbd5e0; border-radius: 12px; padding: 10px; font-family: monospace; font-size: 12px; }
+/* CONTENIDO */
+.main-content{flex:1;padding:25px}
+.view{display:none}
+.view.active{display:block;animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
-/* LESSON VIDEO HIDDEN BY DEFAULT */
-.video-container-hidden { display: none; margin-top: 20px; border-radius: 15px; overflow: hidden; box-shadow: var(--shadow); }
-.btn-video-toggle { background: linear-gradient(135deg, #ff7675, #d63031); color: white; border: none; padding: 12px 25px; border-radius: 30px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+/* DASHBOARD ALUMNO */
+.section-header{background:linear-gradient(135deg,var(--azul),var(--verde));border-radius:20px;padding:20px;margin-bottom:20px;color:#fff;display:flex;align-items:center;gap:15px;box-shadow:var(--shadow)}
+.course-tab{padding:8px 18px;border-radius:30px;border:2px solid #dfe6e9;background:#fff;cursor:pointer;font-weight:700;font-size:13px;transition:0.2s}
+.course-tab.active{background:var(--azul);color:#fff;border-color:var(--azul)}
+
+/* TARJETAS */
+.topic-card{background:#fff;border-radius:20px;overflow:hidden;box-shadow:var(--shadow);transition:0.3s;cursor:pointer;height:100%;border:2px solid transparent}
+.topic-card:hover{transform:translateY(-5px);border-color:var(--amarillo)}
+.card-icon-box{height:100px;display:flex;align-items:center;justify-content:center;font-size:45px}
+
+/* LESSON */
+.video-toggle-btn{background:linear-gradient(135deg,#ff7675,#d63031);color:white;border:none;padding:12px 25px;border-radius:30px;font-weight:800;cursor:pointer;margin:15px 0}
+.video-pane{display:none;margin-top:20px;border-radius:20px;overflow:hidden;box-shadow:var(--shadow2)}
+
+/* ADMIN PANEL - TOTALMENTE AISLADO */
+#view-admin{background:white;border-radius:25px;padding:30px;box-shadow:var(--shadow2);border:1px solid #eee}
+.admin-header{background:#2d3436;color:white;padding:20px;border-radius:15px;margin-bottom:25px}
+.admin-item-card{background:#f8f9fa;border-radius:12px;padding:15px;margin-bottom:10px;border-left:5px solid var(--azul);display:flex;justify-content:space-between;align-items:center}
+.paste-area{width:100%;height:180px;border:2px dashed #cbd5e0;border-radius:12px;padding:15px;font-family:monospace;font-size:12px;margin-top:10px}
 </style>
 </head>
 <body>
@@ -46,49 +62,63 @@ body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:
 <header class="main-header">
     <div class="header-inner">
         <div class="logo-box" onclick="showView('dashboard')">
-            <div style="font-size:30px">🦉</div>
+            <div style="font-size:32px">🦉</div>
             <div class="logo-text"><span class="big">Aprende Fácil</span></div>
         </div>
         <div class="nivel-btns">
-            <button class="nivel-btn active" onclick="setNivel('primaria')">🎒 PRIMARIA</button>
-            <button class="nivel-btn" onclick="setNivel('secundaria')">🎓 SECUNDARIA</button>
+            <button class="nivel-btn active" id="btnNivelPrimaria" onclick="setNivel('primaria')">🎒 PRIMARIA</button>
+            <button class="nivel-btn" id="btnNivelSecundaria" onclick="setNivel('secundaria')">🎓 SECUNDARIA</button>
         </div>
-        <div class="header-actions">
-            <button class="btn-admin-top btn btn-sm btn-light rounded-pill opacity-50" onclick="showAdminLogin()" id="adminLoginBtn"><i class="fas fa-lock"></i> Acceso Profe</button>
-            <div id="adminBadge" style="display:none" class="badge bg-warning text-dark p-2 rounded-pill"><i class="fas fa-user-shield"></i> Modo Admin</div>
+        <div class="header-actions ms-auto">
+            <button class="btn btn-sm btn-white rounded-pill shadow-sm fw-bold" onclick="showAdminLogin()" id="loginAdminBtn">
+                <i class="fas fa-lock"></i> Acceso Admin
+            </button>
+            <button class="btn btn-sm btn-warning rounded-pill fw-bold" style="display:none" id="logoutAdminBtn" onclick="logoutAdmin()">
+                <i class="fas fa-sign-out-alt"></i> Salir de Admin
+            </button>
         </div>
     </div>
 </header>
 
 <div class="app-body d-flex">
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-title text-center fw-bold mb-3">Grados</div>
+    <!-- SIDEBAR SOLO PARA ALUMNO -->
+    <aside class="sidebar" id="mainSidebar">
+        <div class="fw-bold text-center mb-3" style="color:var(--naranja2)">Selecciona tu grado</div>
         <div id="gradosBtns"></div>
     </aside>
 
     <main class="main-content">
-        <!-- DASHBOARD ALUMNO -->
+        <!-- VISTA: DASHBOARD (ALUMNO) -->
         <div class="view active" id="view-dashboard">
-            <div id="courseTabs" class="d-flex gap-2 mb-4 overflow-auto"></div>
-            <div class="cards-grid row" id="cardsGrid"></div>
+            <div class="section-header">
+                <div id="dashIcon" style="font-size:40px">📐</div>
+                <div>
+                    <h2 id="dashTitle" class="m-0 fw-bold">Matemática</h2>
+                    <p id="dashSubtitle" class="m-0 opacity-75">¡Vamos a aprender jugando!</p>
+                </div>
+            </div>
+            <div id="courseTabs" class="d-flex gap-2 mb-4"></div>
+            <div class="row" id="cardsGrid"></div>
         </div>
 
-        <!-- VISTA LECCIÓN -->
+        <!-- VISTA: LECCIÓN (ALUMNO) -->
         <div class="view" id="view-lesson">
-            <button class="btn btn-outline-secondary mb-3 rounded-pill" onclick="showView('dashboard')"><i class="fas fa-arrow-left"></i> Volver</button>
+            <button class="btn btn-light rounded-pill mb-4 shadow-sm" onclick="showView('dashboard')">
+                <i class="fas fa-arrow-left"></i> Volver a mis temas
+            </button>
             <div class="row">
                 <div class="col-md-8">
-                    <div class="card p-4 shadow-sm border-0 rounded-4">
-                        <h2 id="lesTitle" class="fw-bold"></h2>
+                    <div class="card p-4 border-0 shadow-sm rounded-4">
+                        <h2 id="lesTitle" class="fw-bold text-primary"></h2>
                         <hr>
-                        <h5><i class="fas fa-book-open text-primary"></i> Concepto Clave</h5>
-                        <p id="lesConcepto" class="text-muted"></p>
+                        <h5 class="fw-bold"><i class="fas fa-book-open"></i> Teoría del tema</h5>
+                        <p id="lesConcepto" class="text-secondary" style="font-size:1.1rem; line-height:1.6"></p>
                         
-                        <!-- BOTÓN PARA VER VIDEO (No se muestra al inicio) -->
-                        <button class="btn-video-toggle" id="btnVideoToggle" onclick="toggleLessonVideo()">
-                            <i class="fas fa-play-circle"></i> 🎬 Ver Video Educativo de la Clase
+                        <button class="video-toggle-btn" onclick="toggleVideo()">
+                            <i class="fas fa-play-circle"></i> 🎬 Ver explicación en video
                         </button>
-                        <div class="video-container-hidden" id="lesVideoContainer">
+                        
+                        <div class="video-pane" id="videoPane">
                             <div class="ratio ratio-16x9">
                                 <iframe id="lesIframe" src="" allowfullscreen></iframe>
                             </div>
@@ -96,97 +126,111 @@ body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="card p-3 shadow-sm border-0 rounded-4 bg-light">
-                        <h5><i class="fas fa-lightbulb text-warning"></i> ¿Sabías que?</h5>
-                        <p id="lesFact" class="small"></p>
+                    <div class="card p-4 border-0 shadow-sm rounded-4 bg-white">
+                        <h5 class="fw-bold text-warning"><i class="fas fa-lightbulb"></i> ¿Sabías que?</h5>
+                        <p id="lesFact" class="small text-muted"></p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- PANEL DE CONTROL (SOLO ADMIN) -->
-        <div class="view" id="view-admin" style="display:none">
-            <div class="card p-4 shadow-lg border-0 rounded-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3>⚙️ Panel de Control Escolar</h3>
-                    <button class="btn btn-danger btn-sm rounded-pill" onclick="logoutAdmin()">Cerrar Sesión</button>
+        <!-- VISTA: PANEL DE CONTROL (NETAMENTE ADMINISTRADOR) -->
+        <div class="view" id="view-admin">
+            <div class="admin-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="m-0 fw-bold">Panel de Control Escolar</h3>
+                    <p class="m-0 small opacity-75">Gestiona el contenido de la plataforma</p>
                 </div>
-                
-                <div class="alert alert-info">
-                    <strong>Plantilla de Carga Masiva:</strong> Copia tus datos de Excel en este orden: <br>
-                    <code>ID | Nivel | Grado | Curso | Título | Concepto | VideoURL | DatoCurioso</code>
-                </div>
+                <button class="btn btn-light rounded-pill fw-bold" onclick="abrirModalPegado()">
+                    <i class="fas fa-file-excel"></i> Carga Masiva Excel
+                </button>
+            </div>
 
-                <div class="d-flex gap-2 mb-3">
-                    <button class="btn btn-primary rounded-pill" onclick="abrirModalPegado()"><i class="fas fa-paste"></i> Pegado Masivo Excel</button>
-                    <input type="text" id="adminSearch" class="form-control rounded-pill" placeholder="Buscar tema..." oninput="renderAdminList()">
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <input type="text" id="adminSearch" class="form-control rounded-pill p-3 border-0 shadow-sm" placeholder="🔍 Buscar tema para editar o eliminar..." oninput="renderAdminList()">
                 </div>
+            </div>
 
-                <div id="adminListContainer" class="mt-3"></div>
+            <div id="adminListContainer">
+                <!-- Los temas aparecen aquí solo para el admin -->
             </div>
         </div>
     </main>
 </div>
 
 <script>
-let db = { temas: [], preguntas: [] };
+let db = { temas: [] };
 let currentNivel = 'primaria';
 let currentGrado = 1;
 let currentCurso = 'todos';
 let isAdmin = false;
 
 const cursColors = {
-    matematica: { g1:'#3498db', i:'📐' },
-    comunicacion: { g1:'#2ecc71', i:'📖' },
-    ciencia: { g1:'#f39c12', i:'🔬' },
-    personal: { g1:'#9b59b6', i:'🌍' }
+    matematica: { g1:'#3498db', i:'📐', sub:'Números y lógica' },
+    comunicacion: { g1:'#2ecc71', i:'📖', sub:'Letras y cuentos' },
+    ciencia: { g1:'#f39c12', i:'🔬', sub:'El mundo natural' },
+    personal: { g1:'#9b59b6', i:'🌍', sub:'Nuestra sociedad' }
 };
 
 // --- SEGURIDAD Y ACCESO ---
 function showAdminLogin() {
     Swal.fire({
-        title: 'Acceso Administrador',
+        title: 'Acceso Restringido',
+        text: 'Solo para profesores',
         input: 'password',
-        inputPlaceholder: 'Ingresa la clave maestra',
+        inputPlaceholder: 'Clave maestra',
         showCancelButton: true,
-        confirmButtonText: 'Entrar'
+        confirmButtonColor: '#6c5ce7',
+        confirmButtonText: 'Ingresar'
     }).then((res) => {
-        if(res.value === '1234') { // Cambia tu contraseña aquí
+        if(res.value === '1234') { // CLAVE POR DEFECTO
             isAdmin = true;
-            document.getElementById('adminBadge').style.display = 'block';
-            document.getElementById('adminLoginBtn').style.display = 'none';
-            showView('admin');
-            renderAdminList();
+            localStorage.setItem('af_admin', 'true');
+            iniciarModoAdmin();
         } else if(res.value) {
-            Swal.fire('Error', 'Clave incorrecta', 'error');
+            Swal.fire('Error', 'Contraseña incorrecta', 'error');
         }
     });
 }
 
+function iniciarModoAdmin() {
+    document.getElementById('loginAdminBtn').style.display = 'none';
+    document.getElementById('logoutAdminBtn').style.display = 'block';
+    document.getElementById('mainSidebar').style.display = 'none'; // Escondemos sidebar de alumno
+    showView('admin');
+    renderAdminList();
+}
+
 function logoutAdmin() {
     isAdmin = false;
-    document.getElementById('adminBadge').style.display = 'none';
-    document.getElementById('adminLoginBtn').style.display = 'block';
+    localStorage.removeItem('af_admin');
+    document.getElementById('loginAdminBtn').style.display = 'block';
+    document.getElementById('logoutAdminBtn').style.display = 'none';
+    document.getElementById('mainSidebar').style.display = 'block'; // Mostramos sidebar de alumno
     showView('dashboard');
 }
 
-function showView(v) {
-    if(v === 'admin' && !isAdmin) { showView('dashboard'); return; }
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    document.getElementById('view-' + v).classList.add('active');
-    if(v === 'admin') document.getElementById('view-admin').style.display = 'block';
+function showView(viewId) {
+    // Protección: si no es admin no puede entrar a view-admin
+    if(viewId === 'admin' && !isAdmin) return;
+
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + viewId).classList.add('active');
+    window.scrollTo(0,0);
 }
 
-// --- GESTIÓN DE LECCIONES (ADMIN) ---
+// --- CARGA DE DATOS EXCEL ---
 function abrirModalPegado() {
     Swal.fire({
         title: 'Pegado Masivo desde Excel',
         html: `
-            <textarea id="excelPasteArea" class="paste-area" placeholder="Pega aquí las celdas de tu Excel..."></textarea>
-            <p class="small text-muted mt-2">Columnas: ID, Nivel, Grado, Curso, Título, Concepto, Video, Dato</p>
+            <div class="text-start mb-2 small text-muted">Copia las filas de Excel en este orden:<br><b>ID | Nivel | Grado | Curso | Título | Concepto | VideoURL | Dato</b></div>
+            <textarea id="excelPasteArea" class="paste-area" placeholder="Pega aquí..."></textarea>
         `,
         showCancelButton: true,
-        confirmButtonText: 'Procesar Datos',
+        confirmButtonText: '💾 Guardar Información',
+        width: '800px',
         preConfirm: () => document.getElementById('excelPasteArea').value
     }).then((res) => {
         if(res.isConfirmed) procesarExcel(res.value);
@@ -195,10 +239,11 @@ function abrirModalPegado() {
 
 function procesarExcel(data) {
     const filas = data.split('\n');
+    let cont = 0;
     filas.forEach(f => {
         const c = f.split('\t');
         if(c.length >= 5) {
-            const nuevo = {
+            const nuevoTema = {
                 id: c[0].trim(),
                 nivel: c[1].toLowerCase().trim(),
                 grado: parseInt(c[2]),
@@ -208,45 +253,52 @@ function procesarExcel(data) {
                 video: c[6] || '',
                 dato: c[7] || ''
             };
-            const idx = db.temas.findIndex(t => t.id === nuevo.id);
-            if(idx !== -1) db.temas[idx] = nuevo; else db.temas.push(nuevo);
+            const idx = db.temas.findIndex(t => t.id === nuevoTema.id);
+            if(idx !== -1) db.temas[idx] = nuevoTema;
+            else db.temas.push(nuevoTema);
+            cont++;
         }
     });
     localStorage.setItem('af_db', JSON.stringify(db));
+    Swal.fire('Éxito', `Se procesaron ${cont} lecciones.`, 'success');
     renderAdminList();
     renderDashboard();
-    Swal.fire('¡Éxito!', 'Datos cargados correctamente', 'success');
 }
 
+// --- LOGICA ADMINISTRADOR ---
 function renderAdminList() {
     const container = document.getElementById('adminListContainer');
-    const search = document.getElementById('adminSearch').value.toLowerCase();
+    const busqueda = document.getElementById('adminSearch').value.toLowerCase();
     container.innerHTML = '';
-    
-    db.temas.filter(t => t.titulo.toLowerCase().includes(search)).forEach((t, i) => {
+
+    db.temas.filter(t => t.titulo.toLowerCase().includes(busqueda)).forEach((t, i) => {
         container.innerHTML += `
-            <div class="admin-card-lesson p-3 d-flex justify-content-between align-items-center">
+            <div class="admin-item-card">
                 <div>
-                    <strong>${t.titulo}</strong> <br>
-                    <small class="text-muted">${t.nivel} - ${t.grado}° - ${t.curso}</small>
+                    <span class="badge bg-primary">${t.curso}</span>
+                    <strong class="ms-2">${t.titulo}</strong>
+                    <div class="small text-muted">${t.nivel} - ${t.grado}° grado</div>
                 </div>
-                <div>
-                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarTema(${i})"><i class="fas fa-trash"></i></button>
-                </div>
+                <button class="btn btn-sm btn-outline-danger rounded-pill" onclick="eliminarTema(${i})">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
             </div>
         `;
     });
 }
 
-function eliminarTema(i) {
-    db.temas.splice(i, 1);
+function eliminarTema(idx) {
+    db.temas.splice(idx, 1);
     localStorage.setItem('af_db', JSON.stringify(db));
     renderAdminList();
+    renderDashboard();
 }
 
-// --- VISTA ALUMNO ---
+// --- LOGICA ALUMNO ---
 function setNivel(n) {
     currentNivel = n;
+    document.getElementById('btnNivelPrimaria').classList.toggle('active', n === 'primaria');
+    document.getElementById('btnNivelSecundaria').classList.toggle('active', n === 'secundaria');
     renderGrados();
     renderDashboard();
 }
@@ -255,8 +307,9 @@ function renderGrados() {
     const container = document.getElementById('gradosBtns');
     container.innerHTML = '';
     const max = currentNivel === 'primaria' ? 6 : 5;
+    const label = currentNivel === 'primaria' ? 'Grado' : 'Año';
     for(let i=1; i<=max; i++) {
-        container.innerHTML += `<button class="grado-btn ${i===currentGrado?'active':''}" onclick="setGrado(${i})">${i}° Grado</button>`;
+        container.innerHTML += `<button class="grado-btn ${i===currentGrado?'active':''}" onclick="setGrado(${i})">${i}° ${label}</button>`;
     }
 }
 
@@ -266,23 +319,38 @@ function setGrado(g) {
     renderDashboard();
 }
 
+function setCurso(c) {
+    currentCurso = c;
+    renderDashboard();
+}
+
 function renderDashboard() {
+    const tabs = document.getElementById('courseTabs');
+    tabs.innerHTML = `<button class="course-tab ${currentCurso==='todos'?'active':''}" onclick="setCurso('todos')">🌟 Todos</button>`;
+    Object.keys(cursColors).forEach(c => {
+        tabs.innerHTML += `<button class="course-tab ${currentCurso===c?'active':''}" onclick="setCurso('${c}')">${cursColors[c].i} ${c.charAt(0).toUpperCase()+c.slice(1)}</button>`;
+    });
+
     const grid = document.getElementById('cardsGrid');
     grid.innerHTML = '';
-    const filtrados = db.temas.filter(t => t.nivel === currentNivel && t.grado == currentGrado);
-    
+    const filtrados = db.temas.filter(t => t.nivel === currentNivel && t.grado == currentGrado && (currentCurso === 'todos' || t.curso === currentCurso));
+
+    if(filtrados.length === 0) {
+        grid.innerHTML = '<div class="text-center p-5 opacity-50"><h4>Aún no hay lecciones aquí.</h4><p>Vuelve pronto para ver contenido nuevo.</p></div>';
+        return;
+    }
+
     filtrados.forEach(t => {
         const color = cursColors[t.curso]?.g1 || '#ccc';
         grid.innerHTML += `
-            <div class="col-md-4 mb-3">
-                <div class="card shadow-sm border-0 rounded-4 overflow-hidden h-100" onclick="verLeccion('${t.id}')" style="cursor:pointer">
-                    <div style="height:100px; background:${color}; display:flex; align-items:center; justify-content:center; color:white; font-size:40px">
-                        ${cursColors[t.curso]?.i || '📚'}
-                    </div>
-                    <div class="card-body">
+            <div class="col-md-4 mb-4">
+                <div class="topic-card" onclick="verLeccion('${t.id}')">
+                    <div class="card-icon-box" style="background:${color}15; color:${color}">${cursColors[t.curso]?.i}</div>
+                    <div class="p-3">
                         <small class="text-uppercase fw-bold" style="color:${color}">${t.curso}</small>
-                        <h6 class="fw-bold">${t.titulo}</h6>
-                        <button class="btn btn-sm btn-primary w-100 rounded-pill mt-2">¡Aprender!</button>
+                        <h5 class="fw-bold mb-2">${t.titulo}</h5>
+                        <p class="small text-muted mb-3">${cursColors[t.curso]?.sub}</p>
+                        <button class="btn btn-sm btn-primary w-100 rounded-pill">¡Empezar clase!</button>
                     </div>
                 </div>
             </div>
@@ -293,37 +361,36 @@ function renderDashboard() {
 function verLeccion(id) {
     const t = db.temas.find(x => x.id === id);
     if(!t) return;
-    
     document.getElementById('lesTitle').textContent = t.titulo;
     document.getElementById('lesConcepto').textContent = t.concepto;
-    document.getElementById('lesFact').textContent = t.dato || '¡Sigue explorando para aprender más!';
+    document.getElementById('lesFact').textContent = t.dato || '¿Sabías que aprender 15 minutos al día te hace más inteligente?';
     
-    // Configurar Video pero mantenerlo oculto
-    const videoId = t.video.includes('v=') ? t.video.split('v=')[1].split('&')[0] : t.video.split('/').pop();
-    document.getElementById('lesIframe').src = `https://www.youtube.com/embed/${videoId}`;
-    document.getElementById('lesVideoContainer').style.display = 'none';
-    document.getElementById('btnVideoToggle').innerHTML = '<i class="fas fa-play-circle"></i> 🎬 Ver Video Educativo de la Clase';
+    // Preparar video
+    const vidUrl = t.video;
+    let vidId = "";
+    if(vidUrl.includes('v=')) vidId = vidUrl.split('v=')[1].split('&')[0];
+    else vidId = vidUrl.split('/').pop();
     
+    document.getElementById('lesIframe').src = `https://www.youtube.com/embed/${vidId}`;
+    document.getElementById('videoPane').style.display = 'none'; // Oculto por defecto
     showView('lesson');
 }
 
-function toggleLessonVideo() {
-    const container = document.getElementById('lesVideoContainer');
-    const btn = document.getElementById('btnVideoToggle');
-    if(container.style.display === 'none') {
-        container.style.display = 'block';
-        btn.innerHTML = '<i class="fas fa-eye-slash"></i> Ocultar Video';
-    } else {
-        container.style.display = 'none';
-        btn.innerHTML = '<i class="fas fa-play-circle"></i> 🎬 Ver Video Educativo de la Clase';
-    }
+function toggleVideo() {
+    const pane = document.getElementById('videoPane');
+    const isHidden = pane.style.display === 'none';
+    pane.style.display = isHidden ? 'block' : 'none';
 }
 
 // INICIO
-const saved = localStorage.getItem('af_db');
-if(saved) db = JSON.parse(saved);
+const local = localStorage.getItem('af_db');
+if(local) db = JSON.parse(local);
 setNivel('primaria');
 
+if(localStorage.getItem('af_admin') === 'true') {
+    isAdmin = true;
+    iniciarModoAdmin();
+}
 </script>
 </body>
 </html>
