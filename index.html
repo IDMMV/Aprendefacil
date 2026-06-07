@@ -13,587 +13,317 @@
 :root{--verde:#2ecc71;--verde2:#27ae60;--azul:#3498db;--naranja:#f39c12;--naranja2:#e67e22;--rojo:#e74c3c;--morado:#9b59b6;--cyan:#00cec9;--amarillo:#fdcb6e;--bg:#f0f7ff;--card:#fff;--texto:#2d3436;--muted:#636e72;--font:'Nunito',sans-serif;--display:'Fredoka One',cursive;--shadow:0 6px 24px rgba(0,0,0,0.10);--shadow2:0 12px 40px rgba(0,0,0,0.15)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:hidden}
-::-webkit-scrollbar{width:7px}::-webkit-scrollbar-thumb{background:#b2bec3;border-radius:4px}
 .cloud-bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
 .cloud{position:absolute;background:rgba(255,255,255,0.5);border-radius:50px;animation:drift linear infinite}
-.cloud:before,.cloud:after{content:'';position:absolute;background:inherit;border-radius:50%}
-.cloud:before{width:60%;height:100%;top:-50%;left:10%}.cloud:after{width:40%;height:80%;top:-40%;right:15%}
 @keyframes drift{from{transform:translateX(-200px)}to{transform:translateX(calc(100vw + 200px))}}
+
 .main-header{background:linear-gradient(135deg,#74b9ff 0%,#a29bfe 40%,#fd79a8 100%);padding:12px 20px;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.2)}
 .header-inner{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .logo-box{display:flex;align-items:center;gap:10px;text-decoration:none;cursor:pointer}
-.logo-owl{font-size:36px}.logo-text{font-family:var(--display);color:#fff;line-height:1.1}
-.logo-text .big{font-size:20px;display:block}.logo-text .small{font-size:12px;opacity:0.9}
-.nivel-btns{display:flex;gap:8px;flex-wrap:wrap;flex:1;justify-content:center}
-.nivel-btn{padding:10px 22px;border-radius:50px;border:3px solid rgba(255,255,255,0.5);background:rgba(255,255,255,0.2);color:#fff;font-family:var(--display);font-size:16px;cursor:pointer;transition:all 0.25s;display:flex;align-items:center;gap:7px}
-.nivel-btn:hover,.nivel-btn.active{background:#fff;color:var(--azul);border-color:#fff;transform:scale(1.05)}
-.header-actions{display:flex;gap:8px;margin-left:auto;align-items:center}
-.btn-sync{padding:7px 12px;border-radius:20px;border:2px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;font-size:13px;transition:all 0.2s}
-.btn-sync:hover{background:rgba(255,255,255,0.25)}
-.btn-admin-top,.btn-ia-top{padding:8px 14px;border-radius:30px;border:2px solid rgba(255,255,255,0.6);background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:700;display:flex;align-items:center;gap:5px;transition:all 0.2s}
-.btn-ia-top{background:rgba(0,0,0,0.15);border-color:rgba(255,255,255,0.3)}
-#syncBar{font-size:12px;color:rgba(255,255,255,0.8);display:flex;align-items:center;gap:5px}
-.app-body{display:flex;min-height:calc(100vh - 70px);position:relative;z-index:1}
-.sidebar{width:200px;flex-shrink:0;background:linear-gradient(180deg,#fff8f0,#ffe8d6);border-right:3px solid #ffeaa7;padding:16px 10px;position:sticky;top:70px;height:calc(100vh - 70px);overflow-y:auto}
-.sidebar-title{font-family:var(--display);font-size:15px;color:var(--naranja2);text-align:center;margin-bottom:12px;padding-bottom:8px;border-bottom:2px dashed #fdcb6e}
-.grado-btn{display:flex;align-items:center;gap:8px;width:100%;padding:9px 12px;border-radius:12px;border:2px solid transparent;background:rgba(255,255,255,0.7);cursor:pointer;font-family:var(--font);font-weight:700;font-size:13px;color:var(--texto);margin-bottom:6px;transition:all 0.2s}
-.grado-btn:hover{background:#fff;border-color:var(--naranja);transform:translateX(3px)}
-.grado-btn.active{background:var(--naranja);color:#fff;border-color:var(--naranja2)}
-.main-content{flex:1;padding:20px;overflow:hidden}
+.logo-text .big{font-size:20px;font-family:var(--display);color:#fff;display:block}
+.nivel-btn{padding:10px 22px;border-radius:50px;border:3px solid rgba(255,255,255,0.5);background:rgba(255,255,255,0.2);color:#fff;font-family:var(--display);cursor:pointer;transition:0.25s}
+.nivel-btn.active{background:#fff;color:var(--azul);border-color:#fff}
 
-/* NUEVOS ESTILOS ADMIN MEJORADO */
-.admin-card-lesson {
-    background: #fff;
-    border-radius: 15px;
-    border-left: 6px solid var(--azul);
-    transition: all 0.2s;
-    border-top: 1px solid #eee;
-    border-right: 1px solid #eee;
-    border-bottom: 1px solid #eee;
-}
-.admin-card-lesson:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-}
-.admin-search-bar {
-    background: rgba(255,255,255,0.7);
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    backdrop-filter: blur(5px);
-    border: 1px solid #ddd;
-}
-.paste-area {
-    width: 100%;
-    height: 180px;
-    border: 2px dashed #cbd5e0;
-    border-radius: 12px;
-    padding: 15px;
-    font-family: monospace;
-    font-size: 12px;
-    background: #fdfdfd;
-    outline: none;
-}
-.paste-area:focus { border-color: var(--azul); background: #fff; }
-.badge-category {
-    font-size: 0.7rem;
-    padding: 4px 8px;
-    border-radius: 8px;
-    text-transform: uppercase;
-    font-weight: 800;
-}
+.sidebar{width:200px;background:linear-gradient(180deg,#fff8f0,#ffe8d6);border-right:3px solid #ffeaa7;padding:16px 10px;position:sticky;top:70px;height:calc(100vh - 70px);overflow-y:auto}
+.grado-btn{display:flex;align-items:center;gap:8px;width:100%;padding:10px;border-radius:12px;border:2px solid transparent;background:rgba(255,255,255,0.7);margin-bottom:6px;font-weight:700;cursor:pointer}
+.grado-btn.active{background:var(--naranja);color:#fff}
 
-/* OTROS ESTILOS */
-.section-header{background:linear-gradient(135deg,var(--g1,#3498db),var(--g2,#2ecc71));border-radius:20px;padding:18px 24px;margin-bottom:20px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow)}
-.course-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.course-tab{padding:8px 18px;border-radius:30px;border:2px solid #dfe6e9;background:#fff;cursor:pointer;font-weight:700;font-size:13px;transition:all 0.2s;display:flex;align-items:center;gap:6px}
-.course-tab.active{color:#fff;border-color:transparent}
-.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:24px}
-.topic-card{background:#fff;border-radius:20px;overflow:hidden;box-shadow:var(--shadow);transition:all 0.3s;cursor:pointer;border:2px solid transparent}
-.topic-card:hover{transform:translateY(-5px);box-shadow:var(--shadow2);border-color:var(--amarillo)}
-.card-img{height:120px;display:flex;align-items:center;justify-content:center;font-size:56px}
-.card-body{padding:14px}.card-title{font-weight:800;font-size:15px;margin-bottom:6px}
-.btn-aprender{width:100%;padding:10px;border-radius:30px;border:none;font-family:var(--display);font-size:14px;color:#fff;cursor:pointer;background:linear-gradient(135deg,#6c5ce7,#a29bfe)}
-.admin-panel{background:#fff;border-radius:24px;padding:28px;box-shadow:var(--shadow2);margin-bottom:24px}
-.atab{padding:8px 18px;border-radius:30px;border:2px solid #dfe6e9;background:#fff;cursor:pointer;font-weight:700;font-size:13px;transition:all 0.2s}
-.atab.on{background:linear-gradient(135deg,#2d3436,#636e72);color:#fff}
-.ai-float{position:fixed;bottom:28px;right:28px;z-index:500}
-.ai-btn{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#4285f4,#34a853,#fbbc05,#ea4335);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
-.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:400;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.modal-ov.open{display:flex}
-.modal-bx{background:#fff;border-radius:24px;padding:32px;width:360px;max-width:92vw}
-.modal-inp{width:100%;padding:12px 16px;border-radius:12px;border:2px solid #dfe6e9;font-family:var(--font);font-size:15px;outline:none;margin-bottom:12px}
-.btn-mok{width:100%;padding:12px;border-radius:30px;border:none;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;font-family:var(--display);cursor:pointer}
+.view{display:none}.view.active{display:block}
+.main-content{flex:1;padding:20px}
+
+/* ADMIN PANEL */
+.admin-card-lesson { background: #fff; border-radius: 15px; border-left: 6px solid var(--azul); border: 1px solid #eee; margin-bottom: 10px; transition: 0.2s; }
+.admin-card-lesson:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.paste-area { width: 100%; height: 150px; border: 2px dashed #cbd5e0; border-radius: 12px; padding: 10px; font-family: monospace; font-size: 12px; }
+
+/* LESSON VIDEO HIDDEN BY DEFAULT */
+.video-container-hidden { display: none; margin-top: 20px; border-radius: 15px; overflow: hidden; box-shadow: var(--shadow); }
+.btn-video-toggle { background: linear-gradient(135deg, #ff7675, #d63031); color: white; border: none; padding: 12px 25px; border-radius: 30px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 10px; margin: 10px 0; }
 </style>
 </head>
 <body>
 
-<div class="cloud-bg">
-    <div class="cloud" style="width:180px;height:55px;top:20%;animation-duration:50s;opacity:0.3"></div>
-</div>
-
-<!-- MODAL BIENVENIDA -->
-<div class="modal-ov open" id="nombreModal">
-    <div class="modal-bx text-center">
-        <div style="font-size:52px;margin-bottom:8px">🦉</div>
-        <h3>¡Hola, Explorador!</h3>
-        <p class="text-muted small">Escribe tu nombre para comenzar</p>
-        <input type="text" class="modal-inp" id="inputNombre" placeholder="Tu nombre..." maxlength="20">
-        <button class="btn-mok" onclick="guardarNombre()">¡Comenzar!</button>
-    </div>
-</div>
-
-<!-- HEADER -->
 <header class="main-header">
     <div class="header-inner">
         <div class="logo-box" onclick="showView('dashboard')">
-            <div class="logo-owl">🦉</div>
-            <div class="logo-text"><span class="big">Aprende Fácil</span><span class="small">Mi Escuela Didáctica</span></div>
+            <div style="font-size:30px">🦉</div>
+            <div class="logo-text"><span class="big">Aprende Fácil</span></div>
         </div>
         <div class="nivel-btns">
             <button class="nivel-btn active" onclick="setNivel('primaria')">🎒 PRIMARIA</button>
             <button class="nivel-btn" onclick="setNivel('secundaria')">🎓 SECUNDARIA</button>
         </div>
         <div class="header-actions">
-            <div id="syncBar"></div>
-            <button class="btn-ia-top" onclick="toggleAI()"><i class="fas fa-robot"></i> IA</button>
-            <button class="btn-admin-top" onclick="showAdminLogin()"><i class="fas fa-lock"></i> Admin</button>
+            <button class="btn-admin-top btn btn-sm btn-light rounded-pill opacity-50" onclick="showAdminLogin()" id="adminLoginBtn"><i class="fas fa-lock"></i> Acceso Profe</button>
+            <div id="adminBadge" style="display:none" class="badge bg-warning text-dark p-2 rounded-pill"><i class="fas fa-user-shield"></i> Modo Admin</div>
         </div>
     </div>
 </header>
 
-<div class="app-body">
-    <aside class="sidebar">
-        <div class="sidebar-title" id="sidebarTitle">🎒 Primaria</div>
-        <div id="gradosBtns">
-            <!-- Dinámico -->
-        </div>
+<div class="app-body d-flex">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-title text-center fw-bold mb-3">Grados</div>
+        <div id="gradosBtns"></div>
     </aside>
 
     <main class="main-content">
-        <!-- VISTA DASHBOARD -->
+        <!-- DASHBOARD ALUMNO -->
         <div class="view active" id="view-dashboard">
-            <div class="section-header" id="secHdr" style="--g1:#3498db;--g2:#2ecc71">
-                <div class="icon" style="font-size:40px">📐</div>
-                <div><h2 id="secTitle">Cargando...</h2><p id="secSub">Explora tus lecciones</p></div>
-            </div>
+            <div id="courseTabs" class="d-flex gap-2 mb-4 overflow-auto"></div>
+            <div class="cards-grid row" id="cardsGrid"></div>
+        </div>
 
-            <div class="course-tabs" id="courseTabs">
-                <!-- Dinámico -->
-            </div>
-
-            <h3 class="fw-bold mb-3" style="font-family: var(--display); color: #2d3436;">📚 Mis Lecciones</h3>
-            <div class="cards-grid" id="cardsGrid">
-                <!-- Dinámico -->
+        <!-- VISTA LECCIÓN -->
+        <div class="view" id="view-lesson">
+            <button class="btn btn-outline-secondary mb-3 rounded-pill" onclick="showView('dashboard')"><i class="fas fa-arrow-left"></i> Volver</button>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card p-4 shadow-sm border-0 rounded-4">
+                        <h2 id="lesTitle" class="fw-bold"></h2>
+                        <hr>
+                        <h5><i class="fas fa-book-open text-primary"></i> Concepto Clave</h5>
+                        <p id="lesConcepto" class="text-muted"></p>
+                        
+                        <!-- BOTÓN PARA VER VIDEO (No se muestra al inicio) -->
+                        <button class="btn-video-toggle" id="btnVideoToggle" onclick="toggleLessonVideo()">
+                            <i class="fas fa-play-circle"></i> 🎬 Ver Video Educativo de la Clase
+                        </button>
+                        <div class="video-container-hidden" id="lesVideoContainer">
+                            <div class="ratio ratio-16x9">
+                                <iframe id="lesIframe" src="" allowfullscreen></iframe>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card p-3 shadow-sm border-0 rounded-4 bg-light">
+                        <h5><i class="fas fa-lightbulb text-warning"></i> ¿Sabías que?</h5>
+                        <p id="lesFact" class="small"></p>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- VISTA ADMIN MEJORADA -->
-        <div class="view" id="view-admin">
-            <div class="admin-panel">
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <div style="font-size:40px">🛠️</div>
-                    <div>
-                        <h3 class="fw-bold mb-0">Panel de Control</h3>
-                        <p class="text-muted small mb-0">Gestiona lecciones y contenido</p>
-                    </div>
-                    <button class="btn btn-outline-danger ms-auto rounded-pill px-4" onclick="logoutAdmin()">Salir</button>
+        <!-- PANEL DE CONTROL (SOLO ADMIN) -->
+        <div class="view" id="view-admin" style="display:none">
+            <div class="card p-4 shadow-lg border-0 rounded-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3>⚙️ Panel de Control Escolar</h3>
+                    <button class="btn btn-danger btn-sm rounded-pill" onclick="logoutAdmin()">Cerrar Sesión</button>
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong>Plantilla de Carga Masiva:</strong> Copia tus datos de Excel en este orden: <br>
+                    <code>ID | Nivel | Grado | Curso | Título | Concepto | VideoURL | DatoCurioso</code>
                 </div>
 
-                <div class="d-flex gap-2 mb-4 overflow-auto pb-2">
-                    <button class="atab on" id="atab-data" onclick="setAdminTab('data')">Lecciones</button>
-                    <button class="atab" id="atab-preguntas" onclick="setAdminTab('preguntas')">Preguntas</button>
-                    <button class="atab" id="atab-juegos" onclick="setAdminTab('juegos')">Juegos</button>
+                <div class="d-flex gap-2 mb-3">
+                    <button class="btn btn-primary rounded-pill" onclick="abrirModalPegado()"><i class="fas fa-paste"></i> Pegado Masivo Excel</button>
+                    <input type="text" id="adminSearch" class="form-control rounded-pill" placeholder="Buscar tema..." oninput="renderAdminList()">
                 </div>
 
-                <!-- SECCIÓN LECCIONES ADMIN -->
-                <div id="asec-data">
-                    <div class="admin-search-bar">
-                        <i class="fas fa-search text-muted"></i>
-                        <input type="text" id="adminSearchInput" class="modal-inp mb-0" style="flex:1" placeholder="Buscar lección por título o curso..." oninput="renderEditorCardsVisual()">
-                        <button class="btn btn-primary rounded-pill px-4" onclick="abrirModalPegado()">
-                            <i class="fas fa-paste me-2"></i> Pegado Masivo Excel
-                        </button>
-                    </div>
-
-                    <div id="editorRows" class="d-flex flex-column gap-3">
-                        <!-- Tarjetas Visuales Dinámicas -->
-                    </div>
-
-                    <button class="btn btn-outline-primary w-100 mt-4 rounded-3 p-3 border-dashed" onclick="addEditorCard()">
-                        <i class="fas fa-plus-circle me-2"></i> Añadir lección manual
-                    </button>
-                </div>
-
-                <!-- OTRAS SECCIONES (SIMPLIFICADAS PARA EL EJEMPLO) -->
-                <div id="asec-preguntas" style="display:none">
-                    <p class="text-center p-5">Sección de preguntas (Usa Excel para carga masiva)</p>
-                </div>
+                <div id="adminListContainer" class="mt-3"></div>
             </div>
         </div>
     </main>
 </div>
 
-<!-- AI FLOAT -->
-<div class="ai-float">
-    <button class="ai-btn" onclick="toggleAI()"><i class="fas fa-magic" style="color:white"></i></button>
-</div>
-
-<!-- MODAL LOGIN ADMIN -->
-<div class="modal-ov" id="adminModal">
-    <div class="modal-bx text-center">
-        <h3>Acceso Admin</h3>
-        <input type="password" class="modal-inp" id="adminPass" placeholder="Clave de seguridad...">
-        <button class="btn-mok" onclick="loginAdmin()">Entrar</button>
-        <button class="btn btn-link btn-sm mt-2 text-decoration-none" onclick="hideAdminLogin()">Cancelar</button>
-    </div>
-</div>
-
 <script>
-// CONFIGURACIÓN Y BASE DE DATOS
-let db = { temas: [], formulas: [], preguntas: [] };
+let db = { temas: [], preguntas: [] };
 let currentNivel = 'primaria';
 let currentGrado = 1;
 let currentCurso = 'todos';
-let alumnoNombre = '';
 let isAdmin = false;
 
 const cursColors = {
-    matematica: { g1:'#3498db', g2:'#2980b9', i:'📐' },
-    comunicacion: { g1:'#2ecc71', g2:'#27ae60', i:'📖' },
-    ciencia: { g1:'#f39c12', g2:'#e67e22', i:'🔬' },
-    personal: { g1:'#9b59b6', g2:'#8e44ad', i:'🌍' }
+    matematica: { g1:'#3498db', i:'📐' },
+    comunicacion: { g1:'#2ecc71', i:'📖' },
+    ciencia: { g1:'#f39c12', i:'🔬' },
+    personal: { g1:'#9b59b6', i:'🌍' }
 };
 
-// INICIO
-document.addEventListener('DOMContentLoaded', () => {
-    const local = localStorage.getItem('af_db');
-    if(local) db = JSON.parse(local);
-    
-    alumnoNombre = localStorage.getItem('af_nombre');
-    if(alumnoNombre) {
-        document.getElementById('nombreModal').classList.remove('open');
-    }
-    
-    setNivel('primaria');
-});
-
-function guardarNombre() {
-    const nom = document.getElementById('inputNombre').value;
-    if(!nom) return;
-    alumnoNombre = nom;
-    localStorage.setItem('af_nombre', nom);
-    document.getElementById('nombreModal').classList.remove('open');
-    Swal.fire('¡Bienvenido!', `Hola ${nom}, prepárate para aprender.`, 'success');
+// --- SEGURIDAD Y ACCESO ---
+function showAdminLogin() {
+    Swal.fire({
+        title: 'Acceso Administrador',
+        input: 'password',
+        inputPlaceholder: 'Ingresa la clave maestra',
+        showCancelButton: true,
+        confirmButtonText: 'Entrar'
+    }).then((res) => {
+        if(res.value === '1234') { // Cambia tu contraseña aquí
+            isAdmin = true;
+            document.getElementById('adminBadge').style.display = 'block';
+            document.getElementById('adminLoginBtn').style.display = 'none';
+            showView('admin');
+            renderAdminList();
+        } else if(res.value) {
+            Swal.fire('Error', 'Clave incorrecta', 'error');
+        }
+    });
 }
 
-// NAVEGACIÓN
-function setNivel(n) {
-    currentNivel = n;
-    document.querySelectorAll('.nivel-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    const container = document.getElementById('gradosBtns');
-    container.innerHTML = '';
-    const max = n === 'primaria' ? 6 : 5;
-    
-    for(let i=1; i<=max; i++) {
-        container.innerHTML += `<button class="grado-btn ${i===currentGrado?'active':''}" onclick="setGrado(${i})">
-            <span>${i}°</span> ${n === 'primaria' ? 'Grado' : 'Año'}
-        </button>`;
-    }
-    renderDashboard();
-}
-
-function setGrado(g) {
-    currentGrado = g;
-    document.querySelectorAll('.grado-btn').forEach(b => b.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-    renderDashboard();
-}
-
-function setCurso(c) {
-    currentCurso = c;
-    renderDashboard();
+function logoutAdmin() {
+    isAdmin = false;
+    document.getElementById('adminBadge').style.display = 'none';
+    document.getElementById('adminLoginBtn').style.display = 'block';
+    showView('dashboard');
 }
 
 function showView(v) {
+    if(v === 'admin' && !isAdmin) { showView('dashboard'); return; }
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById('view-' + v).classList.add('active');
+    if(v === 'admin') document.getElementById('view-admin').style.display = 'block';
 }
 
-// RENDER DASHBOARD
-function renderDashboard() {
-    document.getElementById('secTitle').textContent = `${currentNivel.toUpperCase()} - ${currentGrado}°`;
-    
-    // Tabs de cursos
-    const tabs = document.getElementById('courseTabs');
-    tabs.innerHTML = `<button class="course-tab ${currentCurso==='todos'?'active':''}" onclick="setCurso('todos')">🌟 Todos</button>`;
-    Object.keys(cursColors).forEach(c => {
-        tabs.innerHTML += `<button class="course-tab ${currentCurso===c?'active':''}" onclick="setCurso('${c}')">
-            ${cursColors[c].i} ${c.charAt(0).toUpperCase() + c.slice(1)}
-        </button>`;
-    });
-
-    // Cards
-    const grid = document.getElementById('cardsGrid');
-    grid.innerHTML = '';
-    const filtrados = db.temas.filter(t => t.nivel === currentNivel && t.grado == currentGrado && (currentCurso === 'todos' || t.curso === currentCurso));
-    
-    if(filtrados.length === 0) {
-        grid.innerHTML = '<div class="text-center p-5 w-100 text-muted">Aún no hay lecciones aquí. Entra como Admin para agregar contenido.</div>';
-    } else {
-        filtrados.forEach(t => {
-            const color = cursColors[t.curso]?.g1 || '#ccc';
-            grid.innerHTML += `
-                <div class="topic-card" onclick="verLeccion('${t.id}')">
-                    <div class="card-img" style="background: linear-gradient(135deg, ${color}, #2d3436); color: white">
-                        ${cursColors[t.curso]?.i || '📚'}
-                    </div>
-                    <div class="card-body">
-                        <div class="badge-category mb-2" style="background: ${color}22; color: ${color}">${t.curso}</div>
-                        <div class="card-title">${t.titulo}</div>
-                        <button class="btn-aprender mt-2">¡Aprender!</button>
-                    </div>
-                </div>
-            `;
-        });
-    }
-}
-
-// --- SECCIÓN ADMINISTRACIÓN ---
-
-function showAdminLogin() { document.getElementById('adminModal').classList.add('open'); }
-function hideAdminLogin() { document.getElementById('adminModal').classList.remove('open'); }
-
-function loginAdmin() {
-    const pass = document.getElementById('adminPass').value;
-    if(pass === '1234') { // Cambia esto por tu clave
-        isAdmin = true;
-        hideAdminLogin();
-        showView('admin');
-        renderEditorCardsVisual();
-    } else {
-        Swal.fire('Error', 'Clave incorrecta', 'error');
-    }
-}
-
-function logoutAdmin() { isAdmin = false; showView('dashboard'); }
-
-function setAdminTab(t) {
-    document.querySelectorAll('.atab').forEach(b => b.classList.remove('on'));
-    event.target.classList.add('on');
-    document.getElementById('asec-data').style.display = t === 'data' ? 'block' : 'none';
-    document.getElementById('asec-preguntas').style.display = t === 'preguntas' ? 'block' : 'none';
-    if(t === 'data') renderEditorCardsVisual();
-}
-
-// MEJORA 1: RENDERIZADO VISUAL DE LECCIONES
-function renderEditorCardsVisual() {
-    const container = document.getElementById('editorRows');
-    const busqueda = document.getElementById('adminSearchInput').value.toLowerCase();
-    
-    container.innerHTML = '';
-    
-    const filtrados = db.temas.filter(t => 
-        t.titulo.toLowerCase().includes(busqueda) || 
-        t.curso.toLowerCase().includes(busqueda)
-    );
-
-    filtrados.forEach((t) => {
-        const dbIndex = db.temas.findIndex(item => item.id === t.id);
-        const color = cursColors[t.curso]?.g1 || '#6c757d';
-        
-        container.innerHTML += `
-            <div class="admin-card-lesson p-3 d-flex align-items-center gap-3">
-                <div style="font-size: 24px; background: #f8f9fa; width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid #eee">
-                    ${cursColors[t.curso]?.i || '📚'}
-                </div>
-                <div style="flex:1">
-                    <div class="d-flex align-items-center gap-2">
-                        <h6 class="mb-0 fw-bold">${t.titulo}</h6>
-                        <span class="badge-category" style="background: ${color}22; color: ${color}">${t.curso}</span>
-                    </div>
-                    <small class="text-muted text-uppercase" style="font-size:10px">${t.nivel} • ${t.grado}° Grado • ID: ${t.id}</small>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-light border" onclick="abrirModalEdicionRapida(${dbIndex})" title="Editar"><i class="fas fa-edit text-primary"></i></button>
-                    <button class="btn btn-sm btn-light border" onclick="eliminarLeccion(${dbIndex})" title="Eliminar"><i class="fas fa-trash text-danger"></i></button>
-                </div>
-            </div>
-        `;
-    });
-}
-
-// MEJORA 2: PEGADO DIRECTO DESDE EXCEL
+// --- GESTIÓN DE LECCIONES (ADMIN) ---
 function abrirModalPegado() {
     Swal.fire({
-        title: 'Carga Masiva desde Excel',
+        title: 'Pegado Masivo desde Excel',
         html: `
-            <div class="text-start">
-                <p class="small text-muted mb-2">1. Selecciona tus filas en Excel.<br>2. Copia (Ctrl+C).<br>3. Pega abajo (Ctrl+V).</p>
-                <p class="mb-2" style="font-size:10px; color: var(--azul)"><b>Orden Columnas:</b> ID | Nivel | Grado | Curso | Título | Concepto | Video | Sabías Que</p>
-                <textarea id="excelPasteArea" class="paste-area" placeholder="Pega aquí las celdas de Excel..."></textarea>
-            </div>
+            <textarea id="excelPasteArea" class="paste-area" placeholder="Pega aquí las celdas de tu Excel..."></textarea>
+            <p class="small text-muted mt-2">Columnas: ID, Nivel, Grado, Curso, Título, Concepto, Video, Dato</p>
         `,
         showCancelButton: true,
-        confirmButtonText: '🚀 Procesar y Guardar',
-        width: '700px',
-        preConfirm: () => {
-            const txt = document.getElementById('excelPasteArea').value;
-            if(!txt) return Swal.showValidationMessage('El área está vacía');
-            return txt;
-        }
+        confirmButtonText: 'Procesar Datos',
+        preConfirm: () => document.getElementById('excelPasteArea').value
     }).then((res) => {
-        if(res.isConfirmed) procesarPegadoExcel(res.value);
+        if(res.isConfirmed) procesarExcel(res.value);
     });
 }
 
-function procesarPegadoExcel(data) {
+function procesarExcel(data) {
     const filas = data.split('\n');
-    let count = 0;
-    
     filas.forEach(f => {
-        if(!f.trim()) return;
-        const c = f.split('\t'); // Excel usa Tabulaciones
-        
+        const c = f.split('\t');
         if(c.length >= 5) {
-            const id = c[0].trim() || 'T' + Date.now() + Math.random();
-            const tema = {
-                id: id,
+            const nuevo = {
+                id: c[0].trim(),
                 nivel: c[1].toLowerCase().trim(),
                 grado: parseInt(c[2]),
                 curso: c[3].toLowerCase().trim(),
                 titulo: c[4].trim(),
                 concepto: c[5] || '',
                 video: c[6] || '',
-                sabiasQue: c[7] || '',
-                pasos: [],
-                imagen: '',
-                juegoId: ''
+                dato: c[7] || ''
             };
-            
-            const idx = db.temas.findIndex(t => t.id === id);
-            if(idx !== -1) db.temas[idx] = tema;
-            else db.temas.push(tema);
-            count++;
+            const idx = db.temas.findIndex(t => t.id === nuevo.id);
+            if(idx !== -1) db.temas[idx] = nuevo; else db.temas.push(nuevo);
         }
     });
-
     localStorage.setItem('af_db', JSON.stringify(db));
-    renderEditorCardsVisual();
-    Swal.fire('Completado', `Se procesaron ${count} lecciones correctamente.`, 'success');
+    renderAdminList();
+    renderDashboard();
+    Swal.fire('¡Éxito!', 'Datos cargados correctamente', 'success');
 }
 
-// EDICIÓN RÁPIDA (MODAL)
-function abrirModalEdicionRapida(idx) {
-    const t = db.temas[idx];
-    Swal.fire({
-        title: 'Editar Lección',
-        html: `
-            <div class="text-start">
-                <label class="small fw-bold">Título</label>
-                <input id="edit-titulo" class="modal-inp" value="${t.titulo}">
-                <div class="row">
-                    <div class="col-6">
-                        <label class="small fw-bold">Curso</label>
-                        <input id="edit-curso" class="modal-inp" value="${t.curso}">
+function renderAdminList() {
+    const container = document.getElementById('adminListContainer');
+    const search = document.getElementById('adminSearch').value.toLowerCase();
+    container.innerHTML = '';
+    
+    db.temas.filter(t => t.titulo.toLowerCase().includes(search)).forEach((t, i) => {
+        container.innerHTML += `
+            <div class="admin-card-lesson p-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${t.titulo}</strong> <br>
+                    <small class="text-muted">${t.nivel} - ${t.grado}° - ${t.curso}</small>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="eliminarTema(${i})"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function eliminarTema(i) {
+    db.temas.splice(i, 1);
+    localStorage.setItem('af_db', JSON.stringify(db));
+    renderAdminList();
+}
+
+// --- VISTA ALUMNO ---
+function setNivel(n) {
+    currentNivel = n;
+    renderGrados();
+    renderDashboard();
+}
+
+function renderGrados() {
+    const container = document.getElementById('gradosBtns');
+    container.innerHTML = '';
+    const max = currentNivel === 'primaria' ? 6 : 5;
+    for(let i=1; i<=max; i++) {
+        container.innerHTML += `<button class="grado-btn ${i===currentGrado?'active':''}" onclick="setGrado(${i})">${i}° Grado</button>`;
+    }
+}
+
+function setGrado(g) {
+    currentGrado = g;
+    renderGrados();
+    renderDashboard();
+}
+
+function renderDashboard() {
+    const grid = document.getElementById('cardsGrid');
+    grid.innerHTML = '';
+    const filtrados = db.temas.filter(t => t.nivel === currentNivel && t.grado == currentGrado);
+    
+    filtrados.forEach(t => {
+        const color = cursColors[t.curso]?.g1 || '#ccc';
+        grid.innerHTML += `
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm border-0 rounded-4 overflow-hidden h-100" onclick="verLeccion('${t.id}')" style="cursor:pointer">
+                    <div style="height:100px; background:${color}; display:flex; align-items:center; justify-content:center; color:white; font-size:40px">
+                        ${cursColors[t.curso]?.i || '📚'}
                     </div>
-                    <div class="col-6">
-                        <label class="small fw-bold">Grado</label>
-                        <input id="edit-grado" type="number" class="modal-inp" value="${t.grado}">
+                    <div class="card-body">
+                        <small class="text-uppercase fw-bold" style="color:${color}">${t.curso}</small>
+                        <h6 class="fw-bold">${t.titulo}</h6>
+                        <button class="btn btn-sm btn-primary w-100 rounded-pill mt-2">¡Aprender!</button>
                     </div>
                 </div>
-                <label class="small fw-bold">Concepto Teórico</label>
-                <textarea id="edit-concepto" class="modal-inp" style="height:100px">${t.concepto}</textarea>
-                <label class="small fw-bold">Video YouTube (URL)</label>
-                <input id="edit-video" class="modal-inp" value="${t.video}">
             </div>
-        `,
-        confirmButtonText: 'Guardar',
-        showCancelButton: true,
-        preConfirm: () => {
-            return {
-                titulo: document.getElementById('edit-titulo').value,
-                curso: document.getElementById('edit-curso').value.toLowerCase(),
-                grado: document.getElementById('edit-grado').value,
-                concepto: document.getElementById('edit-concepto').value,
-                video: document.getElementById('edit-video').value
-            }
-        }
-    }).then(res => {
-        if(res.isConfirmed) {
-            db.temas[idx] = { ...db.temas[idx], ...res.value };
-            localStorage.setItem('af_db', JSON.stringify(db));
-            renderEditorCardsVisual();
-            renderDashboard();
-            Swal.fire('Guardado', '', 'success');
-        }
+        `;
     });
 }
 
-function eliminarLeccion(idx) {
-    Swal.fire({
-        title: '¿Eliminar lección?',
-        text: db.temas[idx].titulo,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#e74c3c',
-        confirmButtonText: 'Sí, eliminar'
-    }).then(res => {
-        if(res.isConfirmed) {
-            db.temas.splice(idx, 1);
-            localStorage.setItem('af_db', JSON.stringify(db));
-            renderEditorCardsVisual();
-            renderDashboard();
-        }
-    });
-}
-
-function addEditorCard() {
-    const id = 'T' + Date.now();
-    db.temas.push({
-        id: id,
-        nivel: 'primaria',
-        grado: 1,
-        curso: 'matematica',
-        titulo: 'Nueva Lección',
-        concepto: '',
-        video: '',
-        sabiasQue: '',
-        pasos: [],
-        imagen: '',
-        juegoId: ''
-    });
-    renderEditorCardsVisual();
-    abrirModalEdicionRapida(db.temas.length - 1);
-}
-
-// IA TUTOR SIMULADO
-function toggleAI() {
-    Swal.fire({
-        title: 'Tutor Mágico IA',
-        input: 'text',
-        inputPlaceholder: 'Pregúntame algo sobre tus tareas...',
-        confirmButtonText: 'Preguntar 🦉',
-        showLoaderOnConfirm: true,
-        preConfirm: (q) => {
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    resolve("¡Excelente pregunta! Como tu tutor, te sugiero revisar la lección de este tema. Recuerda que la constancia es la clave del éxito. ✨");
-                }, 1000);
-            });
-        }
-    }).then((result) => {
-        if (result.value) {
-            Swal.fire('Respuesta:', result.value);
-        }
-    });
-}
-
-// VER LECCIÓN (DETALLE)
 function verLeccion(id) {
     const t = db.temas.find(x => x.id === id);
     if(!t) return;
     
-    Swal.fire({
-        title: t.titulo,
-        html: `
-            <div class="text-start" style="font-size: 14px">
-                <p>${t.concepto || 'Sin contenido teórico aún.'}</p>
-                ${t.video ? `<hr><div class="ratio ratio-16x9"><iframe src="https://www.youtube.com/embed/${t.video.split('v=')[1] || t.video.split('/').pop()}" allowfullscreen></iframe></div>` : ''}
-                <div class="mt-3 p-2 bg-light border-start border-4 border-warning rounded">
-                    <b>¿Sabías que?</b><br>${t.sabiasQue || '¡Aprender es divertido!'}
-                </div>
-            </div>
-        `,
-        confirmButtonText: '¡Entendido!',
-        width: '600px'
-    });
+    document.getElementById('lesTitle').textContent = t.titulo;
+    document.getElementById('lesConcepto').textContent = t.concepto;
+    document.getElementById('lesFact').textContent = t.dato || '¡Sigue explorando para aprender más!';
+    
+    // Configurar Video pero mantenerlo oculto
+    const videoId = t.video.includes('v=') ? t.video.split('v=')[1].split('&')[0] : t.video.split('/').pop();
+    document.getElementById('lesIframe').src = `https://www.youtube.com/embed/${videoId}`;
+    document.getElementById('lesVideoContainer').style.display = 'none';
+    document.getElementById('btnVideoToggle').innerHTML = '<i class="fas fa-play-circle"></i> 🎬 Ver Video Educativo de la Clase';
+    
+    showView('lesson');
 }
+
+function toggleLessonVideo() {
+    const container = document.getElementById('lesVideoContainer');
+    const btn = document.getElementById('btnVideoToggle');
+    if(container.style.display === 'none') {
+        container.style.display = 'block';
+        btn.innerHTML = '<i class="fas fa-eye-slash"></i> Ocultar Video';
+    } else {
+        container.style.display = 'none';
+        btn.innerHTML = '<i class="fas fa-play-circle"></i> 🎬 Ver Video Educativo de la Clase';
+    }
+}
+
+// INICIO
+const saved = localStorage.getItem('af_db');
+if(saved) db = JSON.parse(saved);
+setNivel('primaria');
+
 </script>
 </body>
 </html>
