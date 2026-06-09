@@ -3625,7 +3625,89 @@ function imprimirCertificado(){
 // ═══════════════════════════════════════════════════════════
 var aiOpen=false;
 function toggleAI(){aiOpen=!aiOpen;document.getElementById('aiBox').classList.toggle('open',aiOpen);if(aiOpen)document.getElementById('aiInp').focus();}
-function sendAI(){var inp=document.getElementById('aiInp');var txt=inp.value.trim();if(!txt)return;inp.value='';appendChatMsg(txt,'user');var loader=appendChatMsg('Pensando... 🧠✨','bot');setTimeout(function(){loader.remove();appendChatMsg(responderSimulacionIA(txt),'bot');},1200);}
+async function sendAI(){
+  var inp=document.getElementById('aiInp');
+  var txt=inp.value.trim();
+  if(!txt) return;
+  inp.value='';
+  // Deshabilitar input mientras responde
+  inp.disabled=true;
+  document.querySelector('.ai-send-btn').disabled=true;
+
+  appendChatMsg(txt,'user');
+  var loader=appendChatMsg('<i class="fas fa-circle-notch fa-spin"></i> Pensando... 🧠','bot');
+
+  try {
+    // Contexto del alumno actual
+    var contexto = {
+      nombre: alumnoNombre || 'amiguito',
+      nivel:  currentNivel || 'primaria',
+      grado:  String(currentGrado || '3'),
+      curso:  currentCurso || 'todos',
+      tema:   activeLesson ? activeLesson.titulo : ''
+    };
+
+    var result = await _tutorLlamarAPI(txt, contexto);
+    loader.remove();
+    appendChatMsg(result, 'bot');
+  } catch(e) {
+    loader.remove();
+    // Fallback a respuesta local si falla el API
+    appendChatMsg(responderSimulacionIA(txt), 'bot');
+    console.warn('Tutor API error:', e);
+  }
+
+  inp.disabled=false;
+  document.querySelector('.ai-send-btn').disabled=false;
+  inp.focus();
+}
+
+async function _tutorLlamarAPI(pregunta, contexto){
+  return new Promise(function(resolve, reject){
+    var cbName = 'cb_tutor_' + Date.now();
+    var params = new URLSearchParams({
+      action:   'tutor',
+      pregunta: pregunta.substring(0, 300),
+      nombre:   contexto.nombre.substring(0, 50),
+      nivel:    contexto.nivel,
+      grado:    contexto.grado,
+      curso:    contexto.curso,
+      tema:     (contexto.tema||'').substring(0, 100),
+      callback: cbName,
+      t:        Date.now()
+    });
+
+    var timer = setTimeout(function(){
+      delete window[cbName];
+      var s = document.getElementById('jsonp_tutor_'+cbName);
+      if(s) s.remove();
+      reject(new Error('Timeout'));
+    }, 25000);
+
+    window[cbName] = function(data){
+      clearTimeout(timer);
+      delete window[cbName];
+      var s = document.getElementById('jsonp_tutor_'+cbName);
+      if(s) s.remove();
+      if(data && data.ok && data.respuesta){
+        resolve(data.respuesta);
+      } else {
+        reject(new Error(data ? (data.error||'Sin respuesta') : 'Vacío'));
+      }
+    };
+
+    var s = document.createElement('script');
+    s.id = 'jsonp_tutor_' + cbName;
+    s.src = APPS_SCRIPT_URL + '?' + params.toString();
+    s.onerror = function(){
+      clearTimeout(timer);
+      delete window[cbName];
+      s.remove();
+      reject(new Error('Error de red'));
+    };
+    document.head.appendChild(s);
+  });
+}
 function appendChatMsg(t,side){var box=document.getElementById('aiMsgs');var d=document.createElement('div');d.className='ai-msg '+side;d.innerHTML=t.replace(/\n/g,'<br>');box.appendChild(d);box.scrollTop=box.scrollHeight;return d;}
 function responderSimulacionIA(q){q=q.toLowerCase();if(q.includes('hola')||q.includes('buenos'))return'¡Hola, amiguito! 🦉 ¿Qué misterio escolar resolveremos hoy? ⚡';if(q.includes('fotosintesis')||q.includes('plantas'))return'¡La fotosíntesis es pura magia verde! 🌿 Las plantas toman luz del sol, agua y aire para fabricar su alimento y regalarnos oxígeno. ☀️';if(q.includes('planeta')||q.includes('tierra')||q.includes('sol'))return'¡El universo es asombroso! 🌍 Vivimos en la Tierra, el tercer planeta desde el Sol. 🚀';if(q.includes('sumar')||q.includes('restar')||q.includes('matematica'))return'¡Las matemáticas son superpoderes! 📐 Sumar es juntar cosas para tener más. ¡Practica en nuestros juegos! 🎯';return'¡Qué pregunta tan excelente! 🌟 Revisa los temas de tu grado en la pantalla, o pídele a tu profe que cargue más contenido en el Admin. ¡Nunca dejes de explorar! 🚀';}
 
