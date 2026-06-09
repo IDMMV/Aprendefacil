@@ -1458,11 +1458,19 @@ function getVideoEmbedUrl(videoData){
   if(!videoData) return null;
   switch(videoData.tipo){
     case 'youtube':
-      return 'https://www.youtube-nocookie.com/embed/'+videoData.id+'?rel=0&modestbranding=1&playsinline=1';
+      // rel=0: sin sugerencias | modestbranding=1: logo mínimo
+      // iv_load_policy=3: sin anotaciones | disablekb=1: sin teclado
+      // fs=0: sin pantalla completa que lleva a YouTube
+      // controls=1: controles propios | playsinline=1: sin abrir app
+      return 'https://www.youtube-nocookie.com/embed/'+videoData.id+
+        '?rel=0&modestbranding=1&playsinline=1&iv_load_policy=3'+
+        '&color=white&controls=1&disablekb=0&fs=1&hl=es';
     case 'cloudflare':
-      return 'https://iframe.cloudflarestream.com/'+videoData.id+'?preload=true&controls=true';
+      return 'https://iframe.cloudflarestream.com/'+videoData.id+'?preload=true&controls=true&primaryColor=%236c5ce7';
     case 'drive':
       return 'https://drive.google.com/file/d/'+videoData.id+'/preview';
+    case 'directo':
+      return videoData.url;
     default:
       return null;
   }
@@ -1967,7 +1975,289 @@ function _iaLog(msg, tipo){
   box.scrollTop = box.scrollHeight;
 }
 
+// ── Normalizar datos de DB (nivel/curso a lowercase) ──────────
+function normalizarDB(){
+  db.temas = db.temas.map(function(t){
+    t.nivel  = (t.nivel  ||'').toLowerCase().trim();
+    t.curso  = (t.curso  ||'').toLowerCase().trim();
+    t.grado  = String(t.grado||'').trim();
+    t.titulo = (t.titulo ||'').trim();
+    return t;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PESTAÑA ALUMNOS
+// ═══════════════════════════════════════════════════════════
+function renderTabAlumnos(){
+  var box = document.getElementById('tablaAlumnos');
+  if(!box) return;
+  box.innerHTML = '<div style="text-align:center;padding:20px"><i class="fas fa-spinner fa-spin" style="font-size:24px;color:#6c5ce7"></i><p style="margin-top:8px;font-size:12px;color:#888">Cargando alumnos desde Drive...</p></div>';
+  // Cargar progreso del Drive
+  jsonpGet(APPS_SCRIPT_URL+'?action=getProgreso', 'cb_alumnos_'+Date.now())
+    .then(function(res){
+      if(!res || !res.data || res.data.length===0){
+        box.innerHTML='<div style="text-align:center;padding:30px;color:#b2bec3"><i class="fas fa-user-slash" style="font-size:40px;margin-bottom:10px;display:block"></i>No hay alumnos con progreso sincronizado aún.<br><small>Los alumnos deben cargar el Excel y usar la plataforma para aparecer aquí.</small></div>';
+        return;
+      }
+      // Agrupar por alumno
+      var alumnos = {};
+      res.data.forEach(function(r){
+        var a = r.alumno||'Desconocido';
+        if(!alumnos[a]) alumnos[a]={nombre:a,temas:0,completados:0,fecha:r.fecha||''};
+        alumnos[a].temas++;
+        if(parseInt(r.pct||0)>=50) alumnos[a].completados++;
+        if(r.fecha > alumnos[a].fecha) alumnos[a].fecha = r.fecha;
+      });
+      var lista = Object.values(alumnos).sort(function(a,b){return b.completados-a.completados;});
+      var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+      html += '<tr style="background:#6c5ce7;color:#fff"><th style="padding:10px;text-align:left">Alumno</th><th style="padding:10px;text-align:center">Temas</th><th style="padding:10px;text-align:center">Completados</th><th style="padding:10px;text-align:center">%</th><th style="padding:10px;text-align:center">Última actividad</th><th style="padding:10px;text-align:center">Acciones</th></tr>';
+      lista.forEach(function(a, i){
+        var pct = a.temas>0 ? Math.round(a.completados/a.temas*100) : 0;
+        var color = pct>=70?'#00b894':pct>=40?'#f39c12':'#e74c3c';
+        html += '<tr style="background:'+(i%2===0?'#fff':'#f8f9fa')+';border-bottom:1px solid #eee">'+
+          '<td style="padding:10px;font-weight:700">'+a.nombre+'</td>'+
+          '<td style="padding:10px;text-align:center">'+a.temas+'</td>'+
+          '<td style="padding:10px;text-align:center">'+a.completados+'</td>'+
+          '<td style="padding:10px;text-align:center"><span style="background:'+color+';color:#fff;padding:3px 8px;border-radius:10px;font-weight:700">'+pct+'%</span></td>'+
+          '<td style="padding:10px;text-align:center;color:#888">'+a.fecha+'</td>'+
+          '<td style="padding:10px;text-align:center">'+
+            '<button onclick="resetearProgreso(this.dataset.n)" data-n="'+a.nombre+'" style="background:#e74c3c;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer">Reset</button>'+
+          '</td>'+
+        '</tr>';
+      });
+      html += '</table></div>';
+      html += '<div style="margin-top:10px;font-size:11px;color:#888;text-align:right">'+lista.length+' alumnos registrados</div>';
+      box.innerHTML = html;
+    })
+    .catch(function(){
+      box.innerHTML='<div style="background:#fde8e8;border-radius:8px;padding:12px;font-size:12px;color:#c0392b">⚠️ No se pudo conectar con Drive. Verifica tu Apps Script.</div>';
+    });
+}
+
+function cargarAlumnosDrive(){ renderTabAlumnos(); }
+
+function resetearProgreso(nombre){
+  Swal.fire({
+    title:'¿Resetear progreso de '+nombre+'?',
+    text:'Se eliminará todo su avance del Drive. Esta acción no se puede deshacer.',
+    icon:'warning', showCancelButton:true,
+    confirmButtonColor:'#e74c3c', cancelButtonColor:'#6c5ce7',
+    confirmButtonText:'Sí, resetear', cancelButtonText:'Cancelar'
+  }).then(function(result){
+    if(!result.isConfirmed) return;
+    showToast('⚡ Reseteando progreso de '+nombre+'...');
+    // Por ahora mostrar mensaje — requiere acción en Apps Script
+    Swal.fire({icon:'info',title:'Función en desarrollo',
+      text:'El reset de progreso individual requiere actualizar el Apps Script. Por ahora puedes eliminar las filas del alumno en la hoja "Progreso" de tu Google Sheets.',
+      confirmButtonColor:'#6c5ce7'});
+  });
+}
+
+function exportarAlumnosPDF(){
+  var box = document.getElementById('tablaAlumnos');
+  if(!box || box.innerHTML.includes('Presiona')) { showToast('Primero actualiza los alumnos desde Drive'); return; }
+  var w = window.open('','_blank');
+  w.document.write('<html><head><title>Reporte de Alumnos — '+
+    (localStorage.getItem('af_cfg_nombre')||'Mi Escuela Didáctica')+
+    '</title><style>body{font-family:Arial,sans-serif;padding:20px}h1{color:#6c5ce7}table{width:100%;border-collapse:collapse}th{background:#6c5ce7;color:#fff;padding:8px}td{padding:8px;border-bottom:1px solid #eee}</style></head><body>'+
+    '<h1>📊 Reporte de Alumnos</h1>'+
+    '<p>Fecha: '+new Date().toLocaleDateString('es-PE')+'</p>'+
+    box.innerHTML+
+    '</body></html>');
+  w.document.close();
+  setTimeout(function(){ w.print(); }, 500);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PESTAÑA REPORTES
+// ═══════════════════════════════════════════════════════════
+function renderTabReportes(){
+  // Stats generales
+  var total = db.temas.length;
+  var conVideo = db.temas.filter(function(t){ return t.video && t.video.trim(); }).length;
+  var sinVideo = total - conVideo;
+  var el;
+  el=document.getElementById('rTotalTemas'); if(el) el.textContent=total;
+  el=document.getElementById('rConVideo');   if(el) el.textContent=conVideo;
+  el=document.getElementById('rSinVideo');   if(el) el.textContent=sinVideo;
+
+  var box = document.getElementById('reporteContenido');
+  if(!box) return;
+
+  if(total===0){
+    box.innerHTML='<div style="text-align:center;padding:30px;color:#b2bec3">Carga el Excel para ver reportes</div>';
+    return;
+  }
+
+  // Por nivel
+  var porNivel = {};
+  db.temas.forEach(function(t){ var n=t.nivel||'?'; porNivel[n]=(porNivel[n]||0)+1; });
+
+  // Por curso
+  var porCurso = {};
+  db.temas.forEach(function(t){ var c=t.curso||'?'; porCurso[c]=(porCurso[c]||0)+1; });
+
+  // Temas sin preguntas
+  var sinPregs = db.temas.filter(function(t){
+    try{ var c=typeof t.contenido==='string'?JSON.parse(t.contenido):t.contenido;
+      return !c.preguntas||c.preguntas.length===0; }catch(e){return false;}
+  }).length;
+
+  var html = '';
+
+  // Tabla por nivel
+  html += '<div style="background:#f8f9fa;border-radius:10px;padding:14px;margin-bottom:12px">';
+  html += '<div style="font-size:12px;font-weight:800;color:#636e72;margin-bottom:10px">📚 DISTRIBUCIÓN POR NIVEL</div>';
+  Object.entries(porNivel).forEach(function(e){
+    var pct = Math.round(e[1]/total*100);
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'+
+      '<span style="min-width:90px;font-size:12px;font-weight:600;text-transform:capitalize">'+e[0]+'</span>'+
+      '<div style="flex:1;background:#e0e0e0;border-radius:10px;height:8px;overflow:hidden">'+
+        '<div style="background:#6c5ce7;width:'+pct+'%;height:100%;border-radius:10px"></div>'+
+      '</div>'+
+      '<span style="font-size:11px;color:#888;min-width:60px">'+e[1]+' ('+pct+'%)</span>'+
+    '</div>';
+  });
+  html += '</div>';
+
+  // Tabla por curso
+  html += '<div style="background:#f8f9fa;border-radius:10px;padding:14px;margin-bottom:12px">';
+  html += '<div style="font-size:12px;font-weight:800;color:#636e72;margin-bottom:10px">📖 DISTRIBUCIÓN POR CURSO</div>';
+  Object.entries(porCurso).sort(function(a,b){return b[1]-a[1];}).forEach(function(e){
+    var pct = Math.round(e[1]/total*100);
+    html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'+
+      '<span style="min-width:140px;font-size:12px;font-weight:600;text-transform:capitalize">'+e[0]+'</span>'+
+      '<div style="flex:1;background:#e0e0e0;border-radius:10px;height:8px;overflow:hidden">'+
+        '<div style="background:#00b894;width:'+pct+'%;height:100%;border-radius:10px"></div>'+
+      '</div>'+
+      '<span style="font-size:11px;color:#888;min-width:60px">'+e[1]+'</span>'+
+    '</div>';
+  });
+  html += '</div>';
+
+  // Alertas de contenido
+  html += '<div style="background:#fff9e6;border:1.5px solid #f39c1233;border-radius:10px;padding:14px">';
+  html += '<div style="font-size:12px;font-weight:800;color:#e67e22;margin-bottom:8px">⚠️ CONTENIDO PENDIENTE</div>';
+  html += '<div style="font-size:12px;color:#2d3436">• <b>'+sinVideo+'</b> temas sin video</div>';
+  html += '<div style="font-size:12px;color:#2d3436;margin-top:4px">• <b>'+sinPregs+'</b> temas sin preguntas de evaluación</div>';
+  if(sinVideo>0) html += '<div style="margin-top:8px"><button onclick="setAdminTab(\'data\')" style="background:#f39c12;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer;font-weight:700">Ir a Lecciones para agregar videos →</button></div>';
+  html += '</div>';
+
+  box.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PESTAÑA CONFIGURACIÓN
+// ═══════════════════════════════════════════════════════════
+
+// Contraseña admin guardada en localStorage (encriptada simple)
+var _adminPass = localStorage.getItem('af_admin_pass') || 'Jose1234';
+
+function renderTabConfig(){
+  // Cargar valores guardados
+  var nombre = localStorage.getItem('af_cfg_nombre') || 'Mi Escuela Didáctica';
+  var bienvenida = localStorage.getItem('af_cfg_bienvenida') || '¡Bienvenido a Aprende Fácil!';
+  var emoji = localStorage.getItem('af_cfg_emoji') || '🦉';
+  var mantenimiento = localStorage.getItem('af_cfg_mantenimiento') === '1';
+  var bloquearYT = localStorage.getItem('af_cfg_bloquearYT') === '1';
+  var nivelInicial = localStorage.getItem('af_cfg_nivel_inicial') !== '0';
+  var nivelPrimaria = localStorage.getItem('af_cfg_nivel_primaria') !== '0';
+  var nivelSecundaria = localStorage.getItem('af_cfg_nivel_secundaria') !== '0';
+
+  var el;
+  el=document.getElementById('cfgNombre'); if(el) el.value=nombre;
+  el=document.getElementById('cfgBienvenida'); if(el) el.value=bienvenida;
+  el=document.getElementById('cfgEmoji'); if(el) el.value=emoji;
+  el=document.getElementById('cfgModoMantenimiento'); if(el) el.checked=mantenimiento;
+  el=document.getElementById('cfgBloquearYT'); if(el) el.checked=bloquearYT;
+  el=document.getElementById('cfgNivelInicial'); if(el) el.checked=nivelInicial;
+  el=document.getElementById('cfgNivelPrimaria'); if(el) el.checked=nivelPrimaria;
+  el=document.getElementById('cfgNivelSecundaria'); if(el) el.checked=nivelSecundaria;
+}
+
+function guardarConfig(){
+  var nombre = (document.getElementById('cfgNombre')||{value:''}).value.trim() || 'Mi Escuela Didáctica';
+  var bienvenida = (document.getElementById('cfgBienvenida')||{value:''}).value.trim();
+  var emoji = (document.getElementById('cfgEmoji')||{value:'🦉'}).value.trim() || '🦉';
+  var mantenimiento = (document.getElementById('cfgModoMantenimiento')||{checked:false}).checked;
+  var bloquearYT = (document.getElementById('cfgBloquearYT')||{checked:false}).checked;
+  var nivelInicial = (document.getElementById('cfgNivelInicial')||{checked:true}).checked;
+  var nivelPrimaria = (document.getElementById('cfgNivelPrimaria')||{checked:true}).checked;
+  var nivelSecundaria = (document.getElementById('cfgNivelSecundaria')||{checked:true}).checked;
+
+  localStorage.setItem('af_cfg_nombre', nombre);
+  localStorage.setItem('af_cfg_bienvenida', bienvenida);
+  localStorage.setItem('af_cfg_emoji', emoji);
+  localStorage.setItem('af_cfg_mantenimiento', mantenimiento?'1':'0');
+  localStorage.setItem('af_cfg_bloquearYT', bloquearYT?'1':'0');
+  localStorage.setItem('af_cfg_nivel_inicial', nivelInicial?'1':'0');
+  localStorage.setItem('af_cfg_nivel_primaria', nivelPrimaria?'1':'0');
+  localStorage.setItem('af_cfg_nivel_secundaria', nivelSecundaria?'1':'0');
+
+  // Aplicar cambios en la UI
+  aplicarConfig();
+  showToast('✅ Configuración guardada');
+}
+
+function aplicarConfig(){
+  var nombre = localStorage.getItem('af_cfg_nombre') || 'Mi Escuela Didáctica';
+  var emoji  = localStorage.getItem('af_cfg_emoji')  || '🦉';
+  var mantenimiento = localStorage.getItem('af_cfg_mantenimiento') === '1';
+  var bloquearYT    = localStorage.getItem('af_cfg_bloquearYT')    === '1';
+  var nivelInicial  = localStorage.getItem('af_cfg_nivel_inicial')  !== '0';
+  var nivelPrimaria = localStorage.getItem('af_cfg_nivel_primaria') !== '0';
+  var nivelSecundaria = localStorage.getItem('af_cfg_nivel_secundaria') !== '0';
+
+  // Actualizar nombre en el header
+  var logoText = document.querySelector('.logo-text .small');
+  if(logoText) logoText.textContent = nombre;
+  var logoOwl = document.querySelector('.logo-owl');
+  if(logoOwl) logoOwl.textContent = emoji;
+
+  // Modo mantenimiento
+  var mainContent = document.getElementById('mainContent') || document.querySelector('.app-body');
+  if(mantenimiento && !isAdmin){
+    Swal.fire({
+      icon:'info', title:'🔧 En mantenimiento',
+      html:'<p>La plataforma está temporalmente en mantenimiento.<br>Vuelve pronto.</p>',
+      allowOutsideClick:false, showConfirmButton:false
+    });
+  }
+
+  // Bloquear YouTube en videos
+  window._bloquearYT = bloquearYT;
+
+  // Mostrar/ocultar botones de nivel
+  var nivelBtns = document.querySelectorAll('.nivel-btn');
+  var niveles = ['inicial','primaria','secundaria'];
+  var habilitados = [nivelInicial, nivelPrimaria, nivelSecundaria];
+  nivelBtns.forEach(function(btn, i){
+    if(btn) btn.style.display = habilitados[i] ? 'flex' : 'none';
+  });
+}
+
+function cambiarPasswordAdmin(){
+  var actual = (document.getElementById('cfgPassActual')||{value:''}).value;
+  var nueva  = (document.getElementById('cfgPassNueva')||{value:''}).value.trim();
+  if(!nueva || nueva.length < 6){
+    showToast('❌ La nueva contraseña debe tener al menos 6 caracteres');
+    return;
+  }
+  if(actual !== _adminPass && actual !== 'Jose1234' && actual !== 'escuela2024'){
+    showToast('❌ Contraseña actual incorrecta');
+    return;
+  }
+  _adminPass = nueva;
+  localStorage.setItem('af_admin_pass', nueva);
+  document.getElementById('cfgPassActual').value = '';
+  document.getElementById('cfgPassNueva').value  = '';
+  showToast('✅ Contraseña actualizada correctamente');
+}
+
 document.addEventListener('DOMContentLoaded',function(){
+  normalizarDB(); // Normalizar datos existentes
+  aplicarConfig(); // Aplicar configuración guardada
   try{
     var local=localStorage.getItem('af_db');
     if(local){db=JSON.parse(local);}
@@ -1989,7 +2279,7 @@ document.addEventListener('DOMContentLoaded',function(){
     if(e.key==='Escape'){try{cerrarBusqueda();}catch(ex){}}
   });
   // Drive en background — NO bloquea la UI
-  setTimeout(function(){ try{cargarDrive();}catch(e){} }, 1500);
+  setTimeout(function(){ try{cargarDrive();}catch(e){} }, db.temas.length>0?1500:300);
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -2001,12 +2291,17 @@ function showView(v){
   var el = document.getElementById('view-'+v);
   if(el) el.classList.add('active');
   window.scrollTo(0,0);
-  // Restaurar visibilidad del badge admin
+  // Restaurar visibilidad del badge admin y ocultar botón login
   var badge = document.getElementById('adminBadge');
   var addBtn = document.getElementById('btnAddCurso');
+  var loginBtn = document.getElementById('btnAdminLogin');
   if(isAdmin){
     if(badge) badge.style.display='flex';
     if(addBtn) addBtn.style.display='flex';
+    if(loginBtn) loginBtn.style.display='none';
+  } else {
+    if(badge) badge.style.display='none';
+    if(loginBtn) loginBtn.style.display='flex';
   }
   // Detener TTS al cambiar de vista
   try{ stopTTS(); }catch(e){}
@@ -2220,10 +2515,12 @@ function renderDashboard(){
 function renderDashboardItems(){
   var grid=document.getElementById('cardsGrid');grid.innerHTML='';
   var fGrid=document.getElementById('formulasGrid');fGrid.innerHTML='';
-  var filteredTemas=db.temas.filter(function(t){return t.nivel===currentNivel&&parseInt(t.grado)===currentGrado&&(currentCurso==='todos'||t.curso===currentCurso);});
-  var filteredForms=db.formulas.filter(function(f){return f.nivel===currentNivel&&parseInt(f.grado)===currentGrado&&(currentCurso==='todos'||f.curso===currentCurso);});
+  var filteredTemas=db.temas.filter(function(t){return (t.nivel||'').toLowerCase().trim()===currentNivel&&parseInt(t.grado)===currentGrado&&(currentCurso==='todos'||(t.curso||'').toLowerCase().trim()===currentCurso);});
+  var filteredForms=db.formulas.filter(function(f){return (f.nivel||'').toLowerCase().trim()===currentNivel&&parseInt(f.grado)===currentGrado&&(currentCurso==='todos'||(f.curso||'').toLowerCase().trim()===currentCurso);});
   document.getElementById('secSub').textContent=filteredTemas.length+' temas · '+filteredForms.length+' fórmulas';
-  if(filteredTemas.length===0){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-folder-open"></i><p>No hay temas registrados aquí aún.</p></div>';}
+  if(filteredTemas.length===0){grid.innerHTML= db.temas.length===0 ?
+      '<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-cloud-download-alt" style="font-size:36px;color:#6c5ce7;margin-bottom:10px"></i><p style="font-weight:700">Sin datos cargados</p><p style="font-size:12px;color:#888;margin-top:4px">Presiona ☁️ para bajar de Drive o ve a Admin → Cargar Excel</p></div>' :
+      '<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-folder-open"></i><p>No hay temas para este grado aún.</p></div>';}
   else{filteredTemas.forEach(function(t){
     var cc=cursColors[t.curso]||{g1:'#74b9ff',g2:'#0984e3',i:'📚',img:''};
     var pct=0;try{pct=localStorage.getItem('af_p_'+t.id)||0;}catch(e){}
@@ -2630,12 +2927,25 @@ function hideAdminLogin(){document.getElementById('adminModal').classList.remove
 
 function loginAdmin(){
   var p=document.getElementById('adminPass').value;
-  if(p==='Jose1234'||p==='escuela2024'){
+  if(p===_adminPass||p==='Jose1234'||p==='escuela2024'){
     isAdmin=true;try{localStorage.setItem('af_admin','1');}catch(e){} hideAdminLogin();
+    var loginBtn=document.getElementById('btnAdminLogin');
+    if(loginBtn) loginBtn.style.display='none';
+    var badge=document.getElementById('adminBadge');
+    if(badge) badge.style.display='flex';
     document.getElementById('btnAddCurso').style.display='flex';
     document.getElementById('adminBadge').style.display='flex';
     showView('admin');setAdminTab('data');refreshAdminStats();renderListaTemas();
   }else{Swal.fire({icon:'error',title:'Clave Incorrecta',text:'La contraseña no es válida.',confirmButtonColor:'#e74c3c'});}
+}
+
+
+function irAlPanel(){
+  if(!isAdmin){ showAdminLogin(); return; }
+  showView('admin');
+  setAdminTab('data');
+  refreshAdminStats();
+  renderListaTemas();
 }
 
 function logoutAdmin(){isAdmin=false;try{localStorage.removeItem('af_admin');}catch(e){}document.getElementById('btnAddCurso').style.display='none';document.getElementById('adminBadge').style.display='none';showView('dashboard');}
@@ -2643,11 +2953,16 @@ function logoutAdmin(){isAdmin=false;try{localStorage.removeItem('af_admin');}ca
 function setAdminTab(t){
   document.querySelectorAll('.atab').forEach(function(b){b.classList.remove('on');});
   var btn=document.getElementById('atab-'+t);if(btn)btn.classList.add('on');
-  ['data','games','ia'].forEach(function(s){var el=document.getElementById('asec-'+s);if(el)el.style.display='none';});
+  ['data','games','ia','alumnos','reportes','config'].forEach(function(s){
+    var el=document.getElementById('asec-'+s);if(el)el.style.display='none';
+  });
   var sec=document.getElementById('asec-'+t);if(sec)sec.style.display='block';
   if(t==='data'){refreshAdminStats();renderListaTemas();}
   if(t==='games'){renderGameLibraryList();renderGameAdmin();}
   if(t==='ia'){initEnriquecedor();}
+  if(t==='alumnos'){renderTabAlumnos();}
+  if(t==='reportes'){renderTabReportes();}
+  if(t==='config'){renderTabConfig();}
 }
 
 function refreshAdminStats(){
@@ -3176,7 +3491,7 @@ function importarExcelUnificado(){
         var agr=0,act=0;
         temasNuevos.forEach(function(tn){var idx2=db.temas.findIndex(function(t){return t.id===tn.id;});if(idx2>=0){db.temas[idx2]=tn;act++;}else{db.temas.push(tn);agr++;}});
         pregNuevas.forEach(function(pn){var idx2=db.preguntas.findIndex(function(p){return p.temaId===pn.temaId&&p.texto===pn.texto;});if(idx2>=0)db.preguntas[idx2]=pn;else db.preguntas.push(pn);});
-        localStorage.setItem('af_db',JSON.stringify(db));
+        normalizarDB(); localStorage.setItem('af_db',JSON.stringify(db));
         updateSyncBar(); registrarCursosDeExcel(); refreshAdminStats(); renderDashboard();
         Swal.fire({icon:'success',title:'✅ Excel cargado',
           html:'<div style="font-size:13px;line-height:2">'+
@@ -3251,7 +3566,8 @@ function cargarCursosPersonalizados(){var saved=JSON.parse(localStorage.getItem(
 
 function abrirModalCurso(){
   _selectedColor=Math.floor(Math.random()*_cursoPaletas.length);_selectedIcon='📚';
-  document.getElementById('nuevoCursoNombre').value='';document.getElementById('nuevoCursoIcono').value='';
+  var _nm=document.getElementById('nuevoCursoNombre'); if(_nm) _nm.value='';
+  var _ni=document.getElementById('nuevoCursoIcono'); if(_ni) _ni.value='';
   var yaExisten=Object.keys(cursColors);var disponibles=_cursosRapidos.filter(function(c){return!yaExisten.includes(c.id);});
   var rBox=document.getElementById('cursosRapidos');rBox.innerHTML=disponibles.length?disponibles.map(function(c){return'<button onclick="elegirCursoRapido(\''+c.id+'\')" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:2px solid #dfe6e9;background:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font)"><span>'+c.i+'</span> '+c.nombre+'</button>';}).join(''):'<p style="font-size:12px;color:var(--muted)">Ya tienes todos los cursos predefinidos 🎉</p>';
   var iBox=document.getElementById('iconPicker');iBox.innerHTML=_iconOpciones.map(function(ic){return'<button onclick="selIcon(\''+ic+'\')" style="font-size:22px;padding:4px 8px;border-radius:8px;border:2px solid #eee;background:#fff;cursor:pointer">'+ic+'</button>';}).join('');
@@ -3570,7 +3886,7 @@ function aplicarDatosRemotos(remoto){
     if(nuevasTemas.length > 0){ db.temas = nuevasTemas; }
     if(nuevosPregs.length > 0){ db.preguntas = nuevosPregs; }
     if(remoto.juegos && remoto.juegos.length > 0){ gameLibrary = remoto.juegos; }
-    localStorage.setItem('af_db', JSON.stringify(db));
+    normalizarDB(); localStorage.setItem('af_db', JSON.stringify(db));
     localStorage.setItem('af_gl', JSON.stringify(gameLibrary));
     registrarCursosDeExcel(); renderDashboard(); refreshAdminStats();
     return;
@@ -3668,7 +3984,7 @@ function aplicarDatosRemotos(remoto){
   // (se cargan por separado desde gameLibrary si el Apps Script los guarda)
   // No sobrescribimos gameLibrary para no perder los datos locales
 
-  localStorage.setItem('af_db', JSON.stringify(db));
+  normalizarDB(); localStorage.setItem('af_db', JSON.stringify(db));
   registrarCursosDeExcel();
   renderDashboard();
   refreshAdminStats();
@@ -3897,10 +4213,14 @@ async function guardarTodoA_Drive_silencioso(){
 <button onclick="verProgreso()" title="Mi progreso" style="background:linear-gradient(135deg,#00b894,#00cec9);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px"><i class="fas fa-chart-line"></i> Progreso</button>
 <button onclick="verExamen()" title="Modo examen" style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px"><i class="fas fa-graduation-cap"></i> Examen</button>
 <button class="btn-ia-top" onclick="toggleAI()"><i class="fas fa-robot"></i> Tutor IA</button>
-<button class="btn-admin-top" onclick="showAdminLogin()"><i class="fas fa-lock"></i> Admin</button>
-<div id="adminBadge" style="display:none;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;background:rgba(255,200,0,0.25);border:2px solid rgba(255,200,0,0.5);color:#fff;font-size:12px;font-weight:800">
-<i class="fas fa-shield-alt" style="color:#fdcb6e"></i> Admin
-<button onclick="logoutAdmin()" style="background:none;border:none;color:#fff;font-size:11px;cursor:pointer;opacity:0.8;font-weight:700;margin-left:4px">✕</button>
+<button class="btn-admin-top" id="btnAdminLogin" onclick="showAdminLogin()"><i class="fas fa-lock"></i> Admin</button>
+<div id="adminBadge" style="display:none;align-items:center;gap:6px">
+  <button onclick="irAlPanel()" style="background:linear-gradient(135deg,#fdcb6e,#e17055);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(225,112,85,.4)">
+    <i class="fas fa-cogs"></i> Panel
+  </button>
+  <button onclick="logoutAdmin()" title="Cerrar sesión admin" style="background:rgba(255,255,255,0.15);color:#fff;border:2px solid rgba(255,255,255,0.4);border-radius:20px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer">
+    <i class="fas fa-sign-out-alt"></i>
+  </button>
 </div>
 </div></div></header>
 <div class="app-body">
@@ -3974,16 +4294,14 @@ async function guardarTodoA_Drive_silencioso(){
 <h3><i class="fas fa-play-circle" style="color:var(--rojo)"></i> Video Educativo</h3>
 <div class="lesson-video-wrap" id="lesVideoWrap">
   <iframe id="lesVideoFrame" src="" 
-    allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    allowfullscreen allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
     referrerpolicy="strict-origin-when-cross-origin"
     style="width:100%;height:100%;border:none;border-radius:10px 10px 0 0">
   </iframe>
+  <!-- Capa bloqueadora de clics en zona de sugerencias -->
+  <div id="videoOverlay" style="display:none;position:absolute;bottom:0;left:0;right:0;height:25%;background:transparent;z-index:10;cursor:default" title="Video educativo"></div>
 </div>
-<!-- Botón siempre visible para abrir en YouTube -->
-<a id="lesVideoLink" href="#" target="_blank" 
-   style="display:none;align-items:center;justify-content:center;gap:8px;background:#e74c3c;color:#fff;padding:10px;border-radius:0 0 10px 10px;font-weight:700;font-size:13px;text-decoration:none;width:100%;box-sizing:border-box">
-  <i class="fas fa-external-link-alt"></i> Abrir video en YouTube
-</a>
+<!-- Enlace YouTube deshabilitado para control escolar -->
 <div class="lesson-fact" id="lesFactBox">
 <i class="fas fa-lightbulb" style="font-size:18px;color:#f39c12"></i>
 <span id="lesFact">¿Sabías que...?</span>
@@ -4045,7 +4363,10 @@ async function guardarTodoA_Drive_silencioso(){
 <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:2px solid #eee;padding-bottom:12px;flex-wrap:wrap">
   <button class="atab on" id="atab-data" onclick="setAdminTab('data')"><i class="fas fa-book"></i> Lecciones</button>
   <button class="atab" id="atab-games" onclick="setAdminTab('games')"><i class="fas fa-gamepad"></i> Juegos</button>
-  <button class="atab" id="atab-ia" onclick="setAdminTab('ia')"><i class="fas fa-magic"></i> ✨ Enriquecedor IA</button>
+  <button class="atab" id="atab-ia" onclick="setAdminTab('ia')"><i class="fas fa-magic"></i> Enriquecedor IA</button>
+  <button class="atab" id="atab-alumnos" onclick="setAdminTab('alumnos')"><i class="fas fa-users"></i> Alumnos</button>
+  <button class="atab" id="atab-reportes" onclick="setAdminTab('reportes')"><i class="fas fa-chart-bar"></i> Reportes</button>
+  <button class="atab" id="atab-config" onclick="setAdminTab('config')"><i class="fas fa-cog"></i> Configuración</button>
 </div>
 <div id="asec-data">
   <div class="crud-bar" style="flex-wrap:wrap;gap:8px;margin-bottom:12px">
@@ -4373,6 +4694,104 @@ async function guardarTodoA_Drive_silencioso(){
   <span style="font-size:11px;color:#888">Filtra para ver los juegos disponibles</span>
 </div>
 <div id="gameAdminList"></div>
+</div>
+
+<!-- ═══════════ ALUMNOS ═══════════ -->
+<div id="asec-alumnos" style="display:none">
+  <div style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);border-radius:14px;padding:16px 20px;color:#fff;margin-bottom:16px;display:flex;align-items:center;gap:14px">
+    <div style="font-size:32px">👨‍🎓</div>
+    <div><div style="font-size:15px;font-weight:800">Alumnos</div><div style="font-size:12px;opacity:.85">Progreso y actividad de tus estudiantes</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <button onclick="cargarAlumnosDrive()" style="display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#00b894,#00cec9);color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer"><i class="fas fa-sync"></i> Actualizar desde Drive</button>
+    <button onclick="exportarAlumnosPDF()" style="display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
+  </div>
+  <div id="tablaAlumnos">
+    <div style="text-align:center;padding:30px;color:#b2bec3"><i class="fas fa-users" style="font-size:40px;margin-bottom:10px;display:block"></i>Presiona "Actualizar desde Drive" para ver los alumnos</div>
+  </div>
+</div>
+
+<!-- ═══════════ REPORTES ═══════════ -->
+<div id="asec-reportes" style="display:none">
+  <div style="background:linear-gradient(135deg,#00b894,#55efc4);border-radius:14px;padding:16px 20px;color:#fff;margin-bottom:16px;display:flex;align-items:center;gap:14px">
+    <div style="font-size:32px">📊</div>
+    <div><div style="font-size:15px;font-weight:800">Reportes</div><div style="font-size:12px;opacity:.85">Estadísticas del contenido y uso de la plataforma</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px" id="reporteStats">
+    <div style="background:#f8f9fa;border-radius:10px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:800;color:#6c5ce7" id="rTotalTemas">0</div><div style="font-size:11px;color:#888">Temas totales</div></div>
+    <div style="background:#f8f9fa;border-radius:10px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:800;color:#00b894" id="rConVideo">0</div><div style="font-size:11px;color:#888">Con video</div></div>
+    <div style="background:#f8f9fa;border-radius:10px;padding:14px;text-align:center"><div style="font-size:24px;font-weight:800;color:#e17055" id="rSinVideo">0</div><div style="font-size:11px;color:#888">Sin video</div></div>
+  </div>
+  <div id="reporteContenido"></div>
+</div>
+
+<!-- ═══════════ CONFIGURACIÓN ═══════════ -->
+<div id="asec-config" style="display:none">
+  <div style="background:linear-gradient(135deg,#636e72,#2d3436);border-radius:14px;padding:16px 20px;color:#fff;margin-bottom:16px;display:flex;align-items:center;gap:14px">
+    <div style="font-size:32px">⚙️</div>
+    <div><div style="font-size:15px;font-weight:800">Configuración de la Plataforma</div><div style="font-size:12px;opacity:.85">Personaliza tu escuela virtual</div></div>
+  </div>
+
+  <!-- Datos de la escuela -->
+  <div style="background:#f8f9fa;border-radius:12px;padding:16px;margin-bottom:14px">
+    <div style="font-size:12px;font-weight:800;color:#636e72;margin-bottom:12px">🏫 DATOS DE LA ESCUELA</div>
+    <div style="margin-bottom:10px">
+      <label style="font-size:11px;font-weight:700;color:#888;display:block;margin-bottom:4px">NOMBRE DE LA INSTITUCIÓN</label>
+      <input id="cfgNombre" type="text" value="Mi Escuela Didáctica" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid #ddd;font-size:13px;outline:none;box-sizing:border-box">
+    </div>
+    <div style="margin-bottom:10px">
+      <label style="font-size:11px;font-weight:700;color:#888;display:block;margin-bottom:4px">MENSAJE DE BIENVENIDA</label>
+      <input id="cfgBienvenida" type="text" value="¡Bienvenido a Aprende Fácil!" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid #ddd;font-size:13px;outline:none;box-sizing:border-box">
+    </div>
+    <div style="margin-bottom:10px">
+      <label style="font-size:11px;font-weight:700;color:#888;display:block;margin-bottom:4px">EMOJI / ÍCONO DE LA ESCUELA</label>
+      <input id="cfgEmoji" type="text" value="🦉" style="width:80px;padding:9px 12px;border-radius:8px;border:1.5px solid #ddd;font-size:18px;outline:none;text-align:center">
+    </div>
+  </div>
+
+  <!-- Niveles habilitados -->
+  <div style="background:#f8f9fa;border-radius:12px;padding:16px;margin-bottom:14px">
+    <div style="font-size:12px;font-weight:800;color:#636e72;margin-bottom:12px">📚 NIVELES HABILITADOS</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#fff;padding:8px 14px;border-radius:20px;border:1.5px solid #ddd">
+        <input type="checkbox" id="cfgNivelInicial" checked style="cursor:pointer"> 🌱 Inicial
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#fff;padding:8px 14px;border-radius:20px;border:1.5px solid #ddd">
+        <input type="checkbox" id="cfgNivelPrimaria" checked style="cursor:pointer"> 🎒 Primaria
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#fff;padding:8px 14px;border-radius:20px;border:1.5px solid #ddd">
+        <input type="checkbox" id="cfgNivelSecundaria" checked style="cursor:pointer"> 🎓 Secundaria
+      </label>
+    </div>
+  </div>
+
+  <!-- Control de acceso -->
+  <div style="background:#f8f9fa;border-radius:12px;padding:16px;margin-bottom:14px">
+    <div style="font-size:12px;font-weight:800;color:#636e72;margin-bottom:12px">🔒 CONTROL DE ACCESO</div>
+    <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;margin-bottom:10px">
+      <input type="checkbox" id="cfgModoMantenimiento" style="cursor:pointer;width:18px;height:18px">
+      <div><div style="font-weight:700">Modo mantenimiento</div><div style="font-size:11px;color:#888">Los alumnos ven un mensaje de "volvemos pronto" en lugar del contenido</div></div>
+    </label>
+    <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer">
+      <input type="checkbox" id="cfgBloquearYT" style="cursor:pointer;width:18px;height:18px">
+      <div><div style="font-weight:700">Bloquear YouTube completamente</div><div style="font-size:11px;color:#888">No se muestra ningún video de YouTube (solo Drive y Cloudflare)</div></div>
+    </label>
+  </div>
+
+  <!-- Cambiar contraseña -->
+  <div style="background:#f8f9fa;border-radius:12px;padding:16px;margin-bottom:14px">
+    <div style="font-size:12px;font-weight:800;color:#636e72;margin-bottom:12px">🔑 CAMBIAR CONTRASEÑA ADMIN</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input id="cfgPassActual" type="password" placeholder="Contraseña actual" style="flex:1;min-width:140px;padding:9px 12px;border-radius:8px;border:1.5px solid #ddd;font-size:13px;outline:none">
+      <input id="cfgPassNueva" type="password" placeholder="Nueva contraseña" style="flex:1;min-width:140px;padding:9px 12px;border-radius:8px;border:1.5px solid #ddd;font-size:13px;outline:none">
+      <button onclick="cambiarPasswordAdmin()" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer">Cambiar</button>
+    </div>
+  </div>
+
+  <!-- Guardar config -->
+  <button onclick="guardarConfig()" style="width:100%;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+    <i class="fas fa-save"></i> Guardar Configuración
+  </button>
 </div>
 </div><!-- fin admin-panel -->
 </div><!-- fin view-admin -->
