@@ -472,6 +472,8 @@ var currentGrado=3;
 var currentCurso='todos';
 var alumnoNombre='';
 var isAdmin=false;
+// Restaurar sesión admin del localStorage
+try{ isAdmin = localStorage.getItem('af_admin')==='1'; }catch(e){}
 var APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbyq5DPB7Yqkb0NWETo7EorP0n5XfYcB9okRWq-EsjERcJrKlgEorZIHS5et-PJndQKo/exec';
 // NOTA: El HTML envía datos via GET (JSONP) con parámetro ?mode=post&payload=...
 // Tu Apps Script doGet() debe manejar mode=post para guardar datos.
@@ -1994,7 +1996,21 @@ document.addEventListener('DOMContentLoaded',function(){
 //  HELPERS UI
 // ═══════════════════════════════════════════════════════════
 function showToast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);}
-function showView(v){document.querySelectorAll('.view').forEach(function(e){e.classList.remove('active');});document.getElementById('view-'+v).classList.add('active');window.scrollTo(0,0);}
+function showView(v){
+  document.querySelectorAll('.view').forEach(function(e){e.classList.remove('active');});
+  var el = document.getElementById('view-'+v);
+  if(el) el.classList.add('active');
+  window.scrollTo(0,0);
+  // Restaurar visibilidad del badge admin
+  var badge = document.getElementById('adminBadge');
+  var addBtn = document.getElementById('btnAddCurso');
+  if(isAdmin){
+    if(badge) badge.style.display='flex';
+    if(addBtn) addBtn.style.display='flex';
+  }
+  // Detener TTS al cambiar de vista
+  try{ stopTTS(); }catch(e){}
+}
 function cerrarDed(){
   var ov=document.getElementById('dedOv');if(ov)ov.style.display='none';
   try{renderDashboard();}catch(e){}
@@ -2025,11 +2041,14 @@ function setSyncOk(label){
 // Actualizar barra con cantidad de temas
 function updateSyncBar(){
   var span=document.getElementById('syncBarText');
-  if(span){
-    span.textContent='Local: '+db.temas.length+' temas';
-  }
   var sBar=document.getElementById('syncBar');
-  if(sBar){sBar.style.display='flex';}
+  if(sBar) sBar.style.display='flex';
+  if(!span) return;
+  if(db.temas.length === 0){
+    span.innerHTML='<span style="color:#fdcb6e">⚠️ Sin datos — carga tu Excel en Admin</span>';
+  } else {
+    span.innerHTML='<span style="color:#55efc4">✓ '+db.temas.length+' temas cargados</span>';
+  }
 }
 
 // Diagnóstico de conexión con Drive
@@ -2612,14 +2631,14 @@ function hideAdminLogin(){document.getElementById('adminModal').classList.remove
 function loginAdmin(){
   var p=document.getElementById('adminPass').value;
   if(p==='Jose1234'||p==='escuela2024'){
-    isAdmin=true;hideAdminLogin();
+    isAdmin=true;try{localStorage.setItem('af_admin','1');}catch(e){} hideAdminLogin();
     document.getElementById('btnAddCurso').style.display='flex';
     document.getElementById('adminBadge').style.display='flex';
     showView('admin');setAdminTab('data');refreshAdminStats();renderListaTemas();
   }else{Swal.fire({icon:'error',title:'Clave Incorrecta',text:'La contraseña no es válida.',confirmButtonColor:'#e74c3c'});}
 }
 
-function logoutAdmin(){isAdmin=false;document.getElementById('btnAddCurso').style.display='none';document.getElementById('adminBadge').style.display='none';showView('dashboard');}
+function logoutAdmin(){isAdmin=false;try{localStorage.removeItem('af_admin');}catch(e){}document.getElementById('btnAddCurso').style.display='none';document.getElementById('adminBadge').style.display='none';showView('dashboard');}
 
 function setAdminTab(t){
   document.querySelectorAll('.atab').forEach(function(b){b.classList.remove('on');});
