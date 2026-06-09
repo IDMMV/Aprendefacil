@@ -1056,24 +1056,31 @@ function guardarProgresoHoy(){
 function renderProgreso(){
   var s = getEstadisticasProgreso();
   var nombre = alumnoNombre || 'Alumno';
+  var codigo = localStorage.getItem('af_codigo') || '';
 
   // Header
-  var el = document.getElementById('progNombre'); if(el) el.textContent = nombre;
-  var sub = document.getElementById('progSubtitulo');
-  if(sub) sub.textContent = s.total===0 ? '¡Empieza tu primera lección!' :
+  var el;
+  el=document.getElementById('progNombre'); if(el) el.textContent = nombre;
+  el=document.getElementById('progSubtitulo');
+  if(el) el.textContent = s.total===0 ? '¡Empieza tu primera lección!' :
     s.pct < 25 ? 'Vas bien, ¡sigue adelante! 💪' :
     s.pct < 50 ? '¡Ya llevas la mitad! 🌟' :
     s.pct < 75 ? '¡Casi experto! 🚀' : '¡Eres un campeón! 🏆';
-  var raEl = document.getElementById('progRacha'); if(raEl) raEl.textContent = s.racha;
+  el=document.getElementById('progRacha'); if(el) el.textContent = s.racha;
 
-  // Stats globales
+  // Código de acceso si tiene
+  var codigoBox = document.getElementById('progCodigo');
+  if(codigoBox) codigoBox.textContent = codigo ? 'Código: '+codigo : '';
+
+  // Stats globales con gráfico circular
   var statsEl = document.getElementById('progStats');
   if(statsEl) statsEl.innerHTML =
-    statCard('📚', s.total, 'Lecciones', '#6c5ce7') +
-    statCard('🎯', s.pct+'%', 'Avance', '#00b894') +
-    statCard('💎', s.perfect, 'Perfectas', '#f39c12');
+    statCard('📚', s.total,       'Completadas', '#6c5ce7') +
+    statCard('🎯', s.pct+'%',     'Avance',      '#00b894') +
+    statCard('💎', s.perfect,     'Perfectas',   '#f39c12') +
+    statCard('🔥', s.racha+' d',  'Racha',       '#e74c3c');
 
-  // Progreso por curso
+  // Gráfico de barras por curso con SVG nativo
   var CC = {matematica:{color:'#3498db',icon:'🔢',label:'Matemática'},
     comunicacion:{color:'#e74c3c',icon:'📚',label:'Comunicación'},
     ciencia:{color:'#2ecc71',icon:'🔬',label:'Ciencia'},
@@ -1085,55 +1092,70 @@ function renderProgreso(){
 
   var cursosEl = document.getElementById('progCursos');
   if(cursosEl){
-    var html = '';
-    Object.keys(CC).forEach(function(curso){
-      var total = db.temas.filter(function(t){
-        return (t.curso||'').toLowerCase()===(curso||'').toLowerCase();
-      }).length;
-      if(total === 0) return;
-      var comp  = s.cursos[curso] || 0;
-      var pct   = Math.round(comp/total*100);
-      var cc    = CC[curso];
-      html += '<div style="background:var(--card);border-radius:10px;padding:12px 14px">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
-          '<span style="font-size:13px;font-weight:600">'+cc.icon+' '+cc.label+'</span>'+
-          '<span style="font-size:12px;color:'+cc.color+';font-weight:700">'+comp+'/'+total+'</span>'+
-        '</div>'+
-        '<div style="background:#eee;border-radius:20px;height:8px;overflow:hidden">'+
-          '<div style="background:'+cc.color+';height:100%;border-radius:20px;width:'+pct+'%;transition:width .5s"></div>'+
-        '</div>'+
-      '</div>';
-    });
     if(db.temas.length === 0){
       cursosEl.innerHTML='<div style="text-align:center;padding:20px;color:#999">'+
-        '<i class="fas fa-book-open" style="font-size:32px;margin-bottom:10px"></i><br>'+
-        'Carga el Excel en Admin → Lecciones para ver tu progreso</div>';
+        '<i class="fas fa-book-open" style="font-size:32px;margin-bottom:10px;display:block"></i>'+
+        'Carga el Excel en Admin → Lecciones</div>';
     } else {
-      cursosEl.innerHTML = html || '<p style="color:#999;font-size:13px">Empieza a completar lecciones para ver tu progreso aquí.</p>';
+      // Barras de progreso por curso
+      var html = '';
+      Object.keys(CC).forEach(function(curso){
+        var total = db.temas.filter(function(t){
+          return (t.curso||'').toLowerCase().trim()===curso;
+        }).length;
+        if(total === 0) return;
+        var comp = s.cursos[curso] || 0;
+        var pct  = Math.round(comp/total*100);
+        var cc   = CC[curso];
+        html += '<div style="background:var(--card);border-radius:12px;padding:12px 14px;margin-bottom:8px">'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+            '<span style="font-size:13px;font-weight:700">'+cc.icon+' '+cc.label+'</span>'+
+            '<span style="font-size:12px;font-weight:800;color:'+cc.color+'">'+comp+'/'+total+'</span>'+
+          '</div>'+
+          '<div style="background:#eee;border-radius:20px;height:10px;overflow:hidden">'+
+            '<div style="background:'+cc.color+';height:100%;border-radius:20px;width:'+pct+'%;transition:width .6s ease"></div>'+
+          '</div>'+
+          '<div style="font-size:10px;color:#888;margin-top:4px;text-align:right">'+pct+'% completado</div>'+
+        '</div>';
+      });
+      cursosEl.innerHTML = html || '<p style="color:#999;font-size:13px;text-align:center">Empieza a completar lecciones para ver tu progreso.</p>';
     }
   }
 
   // Logros
   var logrosEl = document.getElementById('progLogros');
   if(logrosEl){
-    var saved = {};
-    try{ saved = JSON.parse(localStorage.getItem('af_logros')||'{}'); }catch(e){}
-    var html2 = '';
-    LOGROS_DEF.forEach(function(lg){
-      var desbloqueado = saved[lg.id] || lg.cond(s);
-      if(desbloqueado && !saved[lg.id]){
-        saved[lg.id] = true;
-        try{ localStorage.setItem('af_logros', JSON.stringify(saved)); }catch(e){}
-      }
-      html2 += '<div style="background:'+(desbloqueado?'var(--card)':'#f8f9fa')+';border-radius:10px;padding:10px;text-align:center;border:1.5px solid '+(desbloqueado?'#ffd700':'#eee')+'">'+
-        '<div style="font-size:28px;'+(desbloqueado?'':'filter:grayscale(1);opacity:0.35')+'">'+(desbloqueado?lg.icon:'🔒')+'</div>'+
-        '<div style="font-size:10px;font-weight:700;margin:3px 0;color:'+(desbloqueado?'var(--text)':'#999')+'">'+lg.nombre+'</div>'+
-        '<div style="font-size:9px;color:#aaa;line-height:1.3">'+lg.desc+'</div>'+
+    var logros = LOGROS_DEF || [];
+    var html2  = '';
+    logros.forEach(function(lg){
+      var ganado = s.logros.indexOf(lg.id) >= 0;
+      html2 += '<div style="background:var(--card);border-radius:12px;padding:10px;text-align:center;opacity:'+(ganado?1:0.4)+'">'+
+        '<div style="font-size:28px;margin-bottom:4px">'+(ganado?lg.icon:'⬜')+'</div>'+
+        '<div style="font-size:11px;font-weight:700;color:'+(ganado?'var(--text)':'#aaa')+'">'+lg.nombre+'</div>'+
+        '<div style="font-size:10px;color:#aaa;margin-top:2px">'+lg.desc+'</div>'+
       '</div>';
     });
     logrosEl.innerHTML = html2;
   }
+
+  // Actualizar avatar con la inicial del nombre
+  var av = document.getElementById('progAvatar');
+  if(av){
+    var inicial = (nombre||'?')[0].toUpperCase();
+    av.style.background = 'rgba(255,255,255,0.25)';
+    av.style.borderRadius = '50%';
+    av.style.width = '60px';
+    av.style.height = '60px';
+    av.style.display = 'flex';
+    av.style.alignItems = 'center';
+    av.style.justifyContent = 'center';
+    av.style.fontSize = '28px';
+    av.style.fontWeight = '800';
+    av.style.color = '#fff';
+    av.textContent = inicial;
+  }
 }
+
 
 function statCard(icon, val, label, color){
   return '<div style="background:'+color+'15;border:1.5px solid '+color+'33;border-radius:10px;padding:12px;text-align:center">'+
@@ -2005,47 +2027,112 @@ function normalizarDB(){
 function renderTabAlumnos(){
   var box = document.getElementById('tablaAlumnos');
   if(!box) return;
-  box.innerHTML = '<div style="text-align:center;padding:20px"><i class="fas fa-spinner fa-spin" style="font-size:24px;color:#6c5ce7"></i><p style="margin-top:8px;font-size:12px;color:#888">Cargando alumnos desde Drive...</p></div>';
-  // Cargar progreso del Drive
-  jsonpGet(APPS_SCRIPT_URL+'?action=getProgreso', 'cb_alumnos_'+Date.now())
-    .then(function(res){
-      if(!res || !res.data || res.data.length===0){
-        box.innerHTML='<div style="text-align:center;padding:30px;color:#b2bec3"><i class="fas fa-user-slash" style="font-size:40px;margin-bottom:10px;display:block"></i>No hay alumnos con progreso sincronizado aún.<br><small>Los alumnos deben cargar el Excel y usar la plataforma para aparecer aquí.</small></div>';
-        return;
-      }
-      // Agrupar por alumno
-      var alumnos = {};
-      res.data.forEach(function(r){
-        var a = r.alumno||'Desconocido';
-        if(!alumnos[a]) alumnos[a]={nombre:a,temas:0,completados:0,fecha:r.fecha||''};
-        alumnos[a].temas++;
-        if(parseInt(r.pct||0)>=50) alumnos[a].completados++;
-        if(r.fecha > alumnos[a].fecha) alumnos[a].fecha = r.fecha;
-      });
-      var lista = Object.values(alumnos).sort(function(a,b){return b.completados-a.completados;});
-      var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
-      html += '<tr style="background:#6c5ce7;color:#fff"><th style="padding:10px;text-align:left">Alumno</th><th style="padding:10px;text-align:center">Temas</th><th style="padding:10px;text-align:center">Completados</th><th style="padding:10px;text-align:center">%</th><th style="padding:10px;text-align:center">Última actividad</th><th style="padding:10px;text-align:center">Acciones</th></tr>';
-      lista.forEach(function(a, i){
-        var pct = a.temas>0 ? Math.round(a.completados/a.temas*100) : 0;
-        var color = pct>=70?'#00b894':pct>=40?'#f39c12':'#e74c3c';
-        html += '<tr style="background:'+(i%2===0?'#fff':'#f8f9fa')+';border-bottom:1px solid #eee">'+
-          '<td style="padding:10px;font-weight:700">'+a.nombre+'</td>'+
-          '<td style="padding:10px;text-align:center">'+a.temas+'</td>'+
-          '<td style="padding:10px;text-align:center">'+a.completados+'</td>'+
-          '<td style="padding:10px;text-align:center"><span style="background:'+color+';color:#fff;padding:3px 8px;border-radius:10px;font-weight:700">'+pct+'%</span></td>'+
-          '<td style="padding:10px;text-align:center;color:#888">'+a.fecha+'</td>'+
-          '<td style="padding:10px;text-align:center">'+
-            '<button onclick="resetearProgreso(this.dataset.n)" data-n="'+a.nombre+'" style="background:#e74c3c;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer">Reset</button>'+
-          '</td>'+
-        '</tr>';
-      });
-      html += '</table></div>';
-      html += '<div style="margin-top:10px;font-size:11px;color:#888;text-align:right">'+lista.length+' alumnos registrados</div>';
-      box.innerHTML = html;
-    })
-    .catch(function(){
-      box.innerHTML='<div style="background:#fde8e8;border-radius:8px;padding:12px;font-size:12px;color:#c0392b">⚠️ No se pudo conectar con Drive. Verifica tu Apps Script.</div>';
+
+  var alumnos = _cargarAlumnosDB();
+  
+  // Construir HTML con gestión completa
+  var html = '';
+  
+  // Formulario para crear nuevo alumno
+  html += '<div style="background:#f8f9fa;border-radius:12px;padding:14px;margin-bottom:14px">'+
+    '<div style="font-size:12px;font-weight:800;color:#636e72;margin-bottom:10px">➕ AGREGAR ALUMNO</div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
+      '<div style="flex:2;min-width:120px">'+
+        '<label style="font-size:10px;color:#888;display:block;margin-bottom:3px">NOMBRE</label>'+
+        '<input id="nuevoAlumnoNombre" type="text" placeholder="Nombre del alumno" '+
+          'style="width:100%;padding:8px;border-radius:8px;border:1.5px solid #ddd;font-size:12px;outline:none;box-sizing:border-box">'+
+      '</div>'+
+      '<div style="flex:1;min-width:90px">'+
+        '<label style="font-size:10px;color:#888;display:block;margin-bottom:3px">NIVEL</label>'+
+        '<select id="nuevoAlumnoNivel" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid #ddd;font-size:12px;outline:none">'+
+          '<option value="inicial">Inicial</option>'+
+          '<option value="primaria" selected>Primaria</option>'+
+          '<option value="secundaria">Secundaria</option>'+
+        '</select>'+
+      '</div>'+
+      '<div style="flex:1;min-width:70px">'+
+        '<label style="font-size:10px;color:#888;display:block;margin-bottom:3px">GRADO</label>'+
+        '<select id="nuevoAlumnoGrado" style="width:100%;padding:8px;border-radius:8px;border:1.5px solid #ddd;font-size:12px;outline:none">'+
+          '<option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option>'+
+        '</select>'+
+      '</div>'+
+      '<button onclick="agregarAlumnoDesdeAdmin()" '+
+        'style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">'+
+        '+ Agregar</button>'+
+    '</div>'+
+    // Habilitar examen masivo
+    '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #eee;display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+      '<span style="font-size:11px;color:#888;font-weight:700">Habilitar examen para:</span>'+
+      '<button onclick="habilitarExamenGrado(\'primaria\',\'\')" style="background:#e74c3c;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:700">📝 Todo Primaria</button>'+
+      '<button onclick="habilitarExamenGrado(\'secundaria\',\'\')" style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:700">📝 Todo Secundaria</button>'+
+      '<button onclick="habilitarExamenGrado(\'\',\'\')" style="background:#2d3436;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:700">📝 Todos</button>'+
+    '</div>'+
+  '</div>';
+
+  if(alumnos.length === 0){
+    html += '<div style="text-align:center;padding:30px;color:#b2bec3">'+
+      '<i class="fas fa-users" style="font-size:40px;margin-bottom:10px;display:block"></i>'+
+      'No hay alumnos registrados aún.<br><small>Agrega alumnos para que puedan acceder con código.</small></div>';
+  } else {
+    html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">';
+    html += '<tr style="background:#6c5ce7;color:#fff">'+
+      '<th style="padding:8px 10px;text-align:left">Código</th>'+
+      '<th style="padding:8px 10px;text-align:left">Nombre</th>'+
+      '<th style="padding:8px 10px;text-align:center">Nivel/Grado</th>'+
+      '<th style="padding:8px 10px;text-align:center">Estado</th>'+
+      '<th style="padding:8px 10px;text-align:center">Código Examen</th>'+
+      '<th style="padding:8px 10px;text-align:center">Acciones</th></tr>';
+    
+    alumnos.forEach(function(a, i){
+      var estadoColor = a.activo ? '#00b894' : '#e74c3c';
+      var estadoTxt   = a.activo ? 'Activo' : 'Inactivo';
+      var exColor = a.codigoExamen&&a.codigoExamen.activo ? '#00b894' : '#e67e22';
+      var exTxt   = a.codigoExamen&&a.codigoExamen.activo ? a.codigoExamen.codigo : 'Sin asignar';
+      
+      html += '<tr style="background:'+(i%2===0?'#fff':'#f8f9fa')+';border-bottom:1px solid #eee">'+
+        '<td style="padding:8px 10px;font-family:monospace;font-weight:700;color:#6c5ce7">'+a.codigo+'</td>'+
+        '<td style="padding:8px 10px;font-weight:600">'+a.nombre+'</td>'+
+        '<td style="padding:8px 10px;text-align:center;color:#888;text-transform:capitalize">'+a.nivel+' '+a.grado+'°</td>'+
+        '<td style="padding:8px 10px;text-align:center">'+
+          '<span style="background:'+estadoColor+'20;color:'+estadoColor+';padding:3px 8px;border-radius:10px;font-weight:700;font-size:10px">'+estadoTxt+'</span>'+
+        '</td>'+
+        '<td style="padding:8px 10px;text-align:center;font-family:monospace;font-size:10px;color:'+exColor+'">'+exTxt+'</td>'+
+        '<td style="padding:8px 10px;text-align:center">'+
+          '<div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap">'+
+            '<button onclick="verProgresoAlumno(\''+a.codigo+'\')" title="Ver progreso" style="background:#6c5ce7;color:#fff;border:none;border-radius:5px;padding:4px 7px;font-size:10px;cursor:pointer">📊</button>'+
+            '<button onclick="generarCodigoExamen(\''+a.codigo+'\')" title="Generar código de examen" style="background:#e74c3c;color:#fff;border:none;border-radius:5px;padding:4px 7px;font-size:10px;cursor:pointer">📝</button>'+
+            '<button onclick="toggleAlumno(\''+a.codigo+'\','+(a.activo?'false':'true')+')" title="'+(a.activo?'Desactivar':'Activar')+'" style="background:'+(a.activo?'#f39c12':'#00b894')+';color:#fff;border:none;border-radius:5px;padding:4px 7px;font-size:10px;cursor:pointer">'+(a.activo?'🔒':'✅')+'</button>'+
+            '<button onclick="eliminarAlumno(\''+a.codigo+'\')" title="Eliminar" style="background:#e74c3c;color:#fff;border:none;border-radius:5px;padding:4px 7px;font-size:10px;cursor:pointer">🗑️</button>'+
+          '</div>'+
+        '</td>'+
+      '</tr>';
     });
+    html += '</table></div>';
+    html += '<div style="margin-top:8px;font-size:11px;color:#888;text-align:right">'+alumnos.length+' alumnos registrados</div>';
+  }
+  
+  box.innerHTML = html;
+}
+
+function agregarAlumnoDesdeAdmin(){
+  var nombre = (document.getElementById('nuevoAlumnoNombre')||{value:''}).value.trim();
+  var nivel  = (document.getElementById('nuevoAlumnoNivel')||{value:'primaria'}).value;
+  var grado  = (document.getElementById('nuevoAlumnoGrado')||{value:'3'}).value;
+  if(!nombre){ showToast('Escribe el nombre del alumno'); return; }
+  var alumno = crearAlumno(nombre, nivel, grado);
+  if(alumno){
+    document.getElementById('nuevoAlumnoNombre').value = '';
+    renderTabAlumnos();
+    showToast('✅ Alumno creado: '+alumno.nombre+' — Código: '+alumno.codigo);
+    Swal.fire({
+      icon:'success', title:'Alumno creado',
+      html:'<div style="background:#f8f9fa;border-radius:10px;padding:16px;margin:10px 0">'+
+        '<div style="font-size:13px;color:#888;margin-bottom:6px">Código de acceso para <b>'+alumno.nombre+'</b>:</div>'+
+        '<div style="font-size:28px;font-weight:900;letter-spacing:4px;color:#6c5ce7">'+alumno.codigo+'</div>'+
+      '</div><p style="font-size:12px;color:#636e72">Entrega este código al alumno para que pueda ingresar.</p>',
+      confirmButtonColor:'#6c5ce7', confirmButtonText:'Entendido'
+    });
+  }
 }
 
 function cargarAlumnosDrive(){ renderTabAlumnos(); }
@@ -2268,9 +2355,412 @@ function cambiarPasswordAdmin(){
   showToast('✅ Contraseña actualizada correctamente');
 }
 
+// ═══════════════════════════════════════════════════════════
+//  SISTEMA DE CÓDIGOS DE ALUMNO
+// ═══════════════════════════════════════════════════════════
+
+// Estructura de un alumno:
+// { codigo: "EST-001", nombre: "Jose", nivel: "primaria", grado: "3", 
+//   cursos: [], activo: true, codigoExamen: null }
+
+var alumnoActual = null;  // Alumno activo con código
+
+function _cargarAlumnosDB(){
+  try{
+    var raw = localStorage.getItem('af_alumnos_db');
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+
+function _guardarAlumnosDB(lista){
+  localStorage.setItem('af_alumnos_db', JSON.stringify(lista));
+}
+
+function validarCodigo(){
+  var codigo = ((document.getElementById('inputCodigo')||{}).value||'').trim().toUpperCase();
+  if(!codigo){ showToast('Escribe tu código de acceso'); return; }
+
+  var alumnos = _cargarAlumnosDB();
+  var alumno  = alumnos.find(function(a){ return a.codigo === codigo; });
+
+  if(!alumno){
+    // Código no existe — mostrar error
+    var inp = document.getElementById('inputCodigo');
+    if(inp){ inp.style.borderColor='#e74c3c'; inp.style.background='#fde8e8'; }
+    showToast('❌ Código incorrecto. Pide tu código a tu profesor.');
+    return;
+  }
+
+  if(!alumno.activo){
+    showToast('⚠️ Tu acceso está desactivado. Habla con tu profesor.');
+    return;
+  }
+
+  // Login exitoso
+  alumnoActual  = alumno;
+  alumnoNombre  = alumno.nombre;
+  localStorage.setItem('af_nombre',  alumno.nombre);
+  localStorage.setItem('af_codigo',  alumno.codigo);
+  localStorage.setItem('af_inicio',  localStorage.getItem('af_inicio') || new Date().toDateString());
+
+  document.getElementById('nombreModal').classList.remove('open');
+  mostrarPerfil(alumno.nombre);
+  updateSyncBar();
+  renderDashboard();
+  showToast('¡Bienvenido, '+alumno.nombre+'! 🎉');
+  setTimeout(function(){ try{syncProgresoAlDrive();}catch(e){}}, 1500);
+}
+
+function guardarNombre(){
+  var inp = document.getElementById('inputNombre');
+  var nombre = inp ? inp.value.trim() : '';
+  alumnoNombre = nombre || 'Explorador';
+  alumnoActual = null;  // Sin código
+  localStorage.setItem('af_nombre', alumnoNombre);
+  localStorage.removeItem('af_codigo');
+  if(!localStorage.getItem('af_inicio')) localStorage.setItem('af_inicio', new Date().toDateString());
+  document.getElementById('nombreModal').classList.remove('open');
+  mostrarPerfil(alumnoNombre);
+  updateSyncBar();
+  renderDashboard();
+  setTimeout(function(){ try{syncProgresoAlDrive();}catch(e){}}, 1000);
+}
+
+// Restaurar sesión al cargar
+function restaurarSesionAlumno(){
+  var codigo = localStorage.getItem('af_codigo');
+  if(codigo){
+    var alumnos = _cargarAlumnosDB();
+    var alumno  = alumnos.find(function(a){ return a.codigo === codigo; });
+    if(alumno && alumno.activo){
+      alumnoActual = alumno;
+      alumnoNombre = alumno.nombre;
+      return true;
+    }
+  }
+  var nombre = localStorage.getItem('af_nombre');
+  if(nombre){ alumnoNombre = nombre; return true; }
+  return false;
+}
+
+// ── GESTIÓN DE ALUMNOS DESDE EL ADMIN ────────────────────
+
+function generarCodigo(){
+  var alumnos = _cargarAlumnosDB();
+  var num = alumnos.length + 1;
+  return 'EST-' + String(num).padStart(3,'0');
+}
+
+function crearAlumno(nombre, nivel, grado){
+  var alumnos = _cargarAlumnosDB();
+  // Verificar que no existe
+  if(alumnos.find(function(a){ return a.nombre.toLowerCase()===nombre.toLowerCase();})){
+    showToast('Ya existe un alumno con ese nombre');
+    return null;
+  }
+  var alumno = {
+    codigo:       generarCodigo(),
+    nombre:       nombre,
+    nivel:        nivel || 'primaria',
+    grado:        grado || '3',
+    activo:       true,
+    codigoExamen: null,
+    creado:       new Date().toLocaleDateString('es-PE')
+  };
+  alumnos.push(alumno);
+  _guardarAlumnosDB(alumnos);
+  // Sincronizar con Drive en background
+  _sincronizarAlumnosDrive(alumnos);
+  return alumno;
+}
+
+function toggleAlumno(codigo, activo){
+  var alumnos = _cargarAlumnosDB();
+  var idx = alumnos.findIndex(function(a){ return a.codigo===codigo; });
+  if(idx >= 0){
+    alumnos[idx].activo = activo;
+    _guardarAlumnosDB(alumnos);
+    _sincronizarAlumnosDrive(alumnos);
+    renderTabAlumnos();
+    showToast(activo ? '✅ Alumno activado' : '🔒 Alumno desactivado');
+  }
+}
+
+function eliminarAlumno(codigo){
+  Swal.fire({
+    title:'¿Eliminar alumno?',
+    text:'Se eliminará el código '+codigo+'. Esta acción no se puede deshacer.',
+    icon:'warning', showCancelButton:true,
+    confirmButtonColor:'#e74c3c', confirmButtonText:'Eliminar',
+    cancelButtonText:'Cancelar', cancelButtonColor:'#6c5ce7'
+  }).then(function(r){
+    if(!r.isConfirmed) return;
+    var alumnos = _cargarAlumnosDB().filter(function(a){ return a.codigo!==codigo; });
+    _guardarAlumnosDB(alumnos);
+    _sincronizarAlumnosDrive(alumnos);
+    renderTabAlumnos();
+    showToast('🗑️ Alumno eliminado');
+  });
+}
+
+function _sincronizarAlumnosDrive(alumnos){
+  // Guardar lista de alumnos en Drive (silencioso)
+  try{
+    drivePostViaGet(APPS_SCRIPT_URL, {action:'saveAlumnos', data:{alumnos:alumnos}})
+      .then(function(){ console.log('Alumnos sync OK'); })
+      .catch(function(){});
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SISTEMA DE EXAMEN CON CÓDIGO DE HABILITACIÓN
+// ═══════════════════════════════════════════════════════════
+
+var _codigoExamenActivo = null;  // Código generado por el admin
+var _examenHabilitado   = false; // Si el alumno tiene examen habilitado
+
+function verificarHabilitacionExamen(){
+  // Verificar si el alumno tiene un código de examen asignado
+  var codigo = localStorage.getItem('af_codigo');
+  if(!codigo) return false;  // Sin código de alumno, no puede examinar
+  var alumnos = _cargarAlumnosDB();
+  var alumno  = alumnos.find(function(a){ return a.codigo===codigo; });
+  if(!alumno) return false;
+  return alumno.codigoExamen && alumno.codigoExamen.activo;
+}
+
+// Mostrar pantalla de examen con verificación de código
+function verExamen(){
+  var cfg = document.getElementById('examenConfig');
+  var act = document.getElementById('examenActivo');
+  var res = document.getElementById('examenResultado');
+  var lock= document.getElementById('examenLock');
+
+  if(cfg){ cfg.style.display='none'; cfg.style.opacity='1'; }
+  if(act){ act.style.display='none'; }
+  if(res){ res.style.display='none'; }
+
+  showView('examen');
+
+  // Verificar si tiene examen habilitado
+  var habilitado = verificarHabilitacionExamen() || isAdmin;
+
+  if(habilitado){
+    if(lock) lock.style.display='none';
+    if(cfg){ cfg.style.display='block'; }
+    setTimeout(function(){ actualizarDisponibles(); }, 100);
+  } else {
+    // Mostrar pantalla de código requerido
+    if(lock) lock.style.display='flex';
+    if(cfg){ cfg.style.display='none'; }
+  }
+}
+
+// Alumno ingresa código de examen para desbloquearlo
+function desbloquearExamen(){
+  var inp = document.getElementById('inputCodigoExamen');
+  var codigo = inp ? inp.value.trim().toUpperCase() : '';
+  if(!codigo){ showToast('Escribe el código que te dio tu profesor'); return; }
+
+  var alumnosCodigo = localStorage.getItem('af_codigo');
+  if(!alumnosCodigo){
+    showToast('Primero debes ingresar con tu código de alumno');
+    return;
+  }
+
+  var alumnos = _cargarAlumnosDB();
+  var alumno  = alumnos.find(function(a){ return a.codigo===alumnosCodigo; });
+
+  if(!alumno){
+    showToast('❌ No se encontró tu perfil. Recarga la página.');
+    return;
+  }
+
+  // Verificar que el código de examen coincide
+  if(!alumno.codigoExamen || alumno.codigoExamen.codigo !== codigo){
+    var inp2 = document.getElementById('inputCodigoExamen');
+    if(inp2){ inp2.style.borderColor='#e74c3c'; inp2.style.background='#fde8e8'; }
+    showToast('❌ Código de examen incorrecto');
+    return;
+  }
+
+  if(!alumno.codigoExamen.activo){
+    showToast('⚠️ Este código ya fue usado o está desactivado');
+    return;
+  }
+
+  // Desbloquear examen
+  var lock = document.getElementById('examenLock');
+  var cfg  = document.getElementById('examenConfig');
+  if(lock) lock.style.display='none';
+  if(cfg){ cfg.style.display='block'; }
+  showToast('✅ Examen desbloqueado. ¡Buena suerte!');
+  setTimeout(function(){ actualizarDisponibles(); }, 100);
+}
+
+// Admin genera código de examen para un alumno
+function generarCodigoExamen(codigoAlumno){
+  var alumnos = _cargarAlumnosDB();
+  var idx = alumnos.findIndex(function(a){ return a.codigo===codigoAlumno; });
+  if(idx < 0){ showToast('Alumno no encontrado'); return; }
+
+  // Generar código único
+  var codigoEx = 'EX-'+Math.random().toString(36).substr(2,4).toUpperCase()+'-'+Date.now().toString(36).substr(-3).toUpperCase();
+  alumnos[idx].codigoExamen = { codigo: codigoEx, activo: true, generado: new Date().toLocaleDateString('es-PE') };
+  _guardarAlumnosDB(alumnos);
+  _sincronizarAlumnosDrive(alumnos);
+  renderTabAlumnos();
+
+  Swal.fire({
+    icon:'success',
+    title:'Código de Examen Generado',
+    html:'<div style="background:#f8f9fa;border-radius:10px;padding:16px;margin:10px 0">'+
+      '<div style="font-size:11px;color:#888;margin-bottom:6px">Código para '+alumnos[idx].nombre+':</div>'+
+      '<div style="font-size:28px;font-weight:900;letter-spacing:4px;color:#6c5ce7">'+codigoEx+'</div>'+
+    '</div>'+
+    '<p style="font-size:13px;color:#636e72">Entrega este código al alumno para que pueda rendir el examen.</p>',
+    confirmButtonColor:'#6c5ce7',
+    confirmButtonText:'Copiar código'
+  }).then(function(){
+    navigator.clipboard.writeText(codigoEx).catch(function(){});
+    showToast('✅ Código copiado al portapapeles');
+  });
+}
+
+// Habilitar examen masivo para todo un grado
+function habilitarExamenGrado(nivel, grado){
+  var alumnos = _cargarAlumnosDB();
+  var count = 0;
+  alumnos.forEach(function(a){
+    if((nivel===''||a.nivel===nivel) && (grado===''||a.grado===grado)){
+      var codigoEx = 'EX-GRADO-'+nivel.substring(0,3).toUpperCase()+grado;
+      a.codigoExamen = { codigo: codigoEx, activo: true, generado: new Date().toLocaleDateString('es-PE') };
+      count++;
+    }
+  });
+  _guardarAlumnosDB(alumnos);
+  _sincronizarAlumnosDrive(alumnos);
+  renderTabAlumnos();
+  showToast('✅ Examen habilitado para '+count+' alumnos');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GRÁFICOS DE PROGRESO
+// ═══════════════════════════════════════════════════════════
+
+// Ver progreso detallado de un alumno específico (desde admin)
+function verProgresoAlumno(codigoAlumno){
+  var alumnos = _cargarAlumnosDB();
+  var alumno  = alumnos.find(function(a){ return a.codigo===codigoAlumno; });
+  if(!alumno){ showToast('Alumno no encontrado'); return; }
+
+  // Cargar progreso del Drive para ese alumno
+  var cbName = 'cb_prog_alumno_'+Date.now();
+  jsonpGet(APPS_SCRIPT_URL+'?action=getProgreso&alumno='+encodeURIComponent(alumno.nombre), cbName)
+    .then(function(res){
+      var progData = (res && res.data) ? res.data.filter(function(r){ return r.alumno===alumno.nombre; }) : [];
+
+      // Agrupar por curso
+      var porCurso = {};
+      var CURSOS = ['matematica','comunicacion','ciencia','personal','historia','ingles','arte','educacion_fisica'];
+      var CC = {matematica:{color:'#3498db',icon:'🔢',label:'Matemática'},
+        comunicacion:{color:'#e74c3c',icon:'📚',label:'Comunicación'},
+        ciencia:{color:'#2ecc71',icon:'🔬',label:'Ciencia'},
+        personal:{color:'#f39c12',icon:'🌍',label:'Personal Social'},
+        historia:{color:'#9b59b6',icon:'⚔️',label:'Historia'},
+        ingles:{color:'#1abc9c',icon:'🌐',label:'Inglés'},
+        arte:{color:'#e91e63',icon:'🎨',label:'Arte'},
+        educacion_fisica:{color:'#ff9800',icon:'⚽',label:'Ed. Física'}};
+
+      progData.forEach(function(r){
+        var c = (r.curso||'').toLowerCase();
+        if(!porCurso[c]) porCurso[c] = {completados:0, total:0};
+        porCurso[c].total++;
+        if(parseInt(r.pct||0)>=50) porCurso[c].completados++;
+      });
+
+      // Total de temas por curso en db
+      db.temas.forEach(function(t){
+        var c = (t.curso||'').toLowerCase();
+        if(!porCurso[c]) porCurso[c] = {completados:0, total:0};
+        // Solo contar si no viene del Drive
+        if(progData.length === 0) porCurso[c].total++;
+      });
+
+      // Generar gráfico SVG de barras
+      var bars = '';
+      var barW = 40; var gap = 18; var maxH = 120;
+      var cursoKeys = Object.keys(CC).filter(function(k){ return porCurso[k] && porCurso[k].total > 0; });
+      var svgW = cursoKeys.length * (barW + gap) + gap;
+
+      cursoKeys.forEach(function(c, i){
+        var d = porCurso[c] || {completados:0, total:1};
+        var pct = d.total > 0 ? d.completados/d.total : 0;
+        var h   = Math.max(4, Math.round(pct * maxH));
+        var x   = gap + i * (barW + gap);
+        var y   = maxH - h + 20;
+        var cc  = CC[c] || {color:'#6c5ce7', icon:'📚', label:c};
+        bars += '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" rx="6" fill="'+cc.color+'" opacity="0.85"/>'+
+          '<text x="'+(x+barW/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="10" fill="#636e72" font-weight="700">'+Math.round(pct*100)+'%</text>'+
+          '<text x="'+(x+barW/2)+'" y="'+(maxH+35)+'" text-anchor="middle" font-size="14">'+cc.icon+'</text>'+
+          '<text x="'+(x+barW/2)+'" y="'+(maxH+50)+'" text-anchor="middle" font-size="8" fill="#888">'+cc.label.substring(0,6)+'</text>';
+      });
+
+      var totalComp = Object.values(porCurso).reduce(function(s,d){ return s+d.completados; }, 0);
+      var totalAll  = db.temas.filter(function(t){
+        return (alumno.nivel===''||t.nivel===alumno.nivel) && (alumno.grado===''||String(t.grado)===String(alumno.grado));
+      }).length || db.temas.length;
+      var pctGlobal = totalAll > 0 ? Math.round(totalComp/totalAll*100) : 0;
+
+      Swal.fire({
+        title: '📊 Progreso de '+alumno.nombre,
+        width: '520px',
+        html:
+          '<div style="text-align:left">'+
+          // Stats globales
+          '<div style="display:flex;gap:10px;margin-bottom:16px">'+
+            '<div style="flex:1;background:#f8f9fa;border-radius:10px;padding:12px;text-align:center">'+
+              '<div style="font-size:22px;font-weight:800;color:#6c5ce7">'+totalComp+'</div>'+
+              '<div style="font-size:10px;color:#888">Temas completados</div>'+
+            '</div>'+
+            '<div style="flex:1;background:#f8f9fa;border-radius:10px;padding:12px;text-align:center">'+
+              '<div style="font-size:22px;font-weight:800;color:#00b894">'+pctGlobal+'%</div>'+
+              '<div style="font-size:10px;color:#888">Avance general</div>'+
+            '</div>'+
+            '<div style="flex:1;background:#f8f9fa;border-radius:10px;padding:12px;text-align:center">'+
+              '<div style="font-size:22px;font-weight:800;color:#e67e22">'+alumno.nivel+' '+alumno.grado+'°</div>'+
+              '<div style="font-size:10px;color:#888">Nivel/Grado</div>'+
+            '</div>'+
+          '</div>'+
+          // Barra de progreso global
+          '<div style="background:#eee;border-radius:20px;height:10px;margin-bottom:16px;overflow:hidden">'+
+            '<div style="background:linear-gradient(135deg,#6c5ce7,#00b894);height:100%;border-radius:20px;width:'+pctGlobal+'%;transition:width .5s"></div>'+
+          '</div>'+
+          // Gráfico SVG
+          (cursoKeys.length > 0 ?
+            '<div style="font-size:11px;font-weight:800;color:#636e72;margin-bottom:8px">PROGRESO POR CURSO</div>'+
+            '<div style="overflow-x:auto"><svg width="'+svgW+'" height="'+(maxH+60)+'" viewBox="0 0 '+svgW+' '+(maxH+60)+'">'+
+              bars+
+            '</svg></div>' : '<p style="color:#888;font-size:12px">Sin datos de progreso por curso aún.</p>')+
+          '</div>',
+        confirmButtonColor: '#6c5ce7',
+        confirmButtonText: 'Cerrar'
+      });
+    })
+    .catch(function(){
+      // Mostrar sin datos de Drive
+      Swal.fire({
+        icon:'info', title:'Progreso de '+alumno.nombre,
+        text:'No se pudo cargar el progreso desde Drive. El alumno debe sincronizar su avance.',
+        confirmButtonColor:'#6c5ce7'
+      });
+    });
+}
+
 document.addEventListener('DOMContentLoaded',function(){
-  normalizarDB(); // Normalizar datos existentes
-  aplicarConfig(); // Aplicar configuración guardada
+  normalizarDB();    // Normalizar datos existentes
+  aplicarConfig();   // Aplicar configuración guardada
+  restaurarSesionAlumno(); // Restaurar sesión de alumno con código
   try{
     var local=localStorage.getItem('af_db');
     if(local){db=JSON.parse(local);}
@@ -4742,7 +5232,7 @@ async function guardarTodoA_Drive_silencioso(){
   <div style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);border-radius:16px;padding:20px;color:#fff;margin-bottom:16px;display:flex;align-items:center;gap:16px">
     <div id="progAvatar" style="font-size:48px">🦉</div>
     <div style="flex:1">
-      <div id="progNombre" style="font-size:18px;font-weight:800">Alumno</div>
+      <div id="progNombre" style="font-size:18px;font-weight:800">Alumno</div><div id="progCodigo" style="font-size:11px;opacity:.7;font-family:monospace;margin-top:2px"></div>
       <div style="font-size:13px;opacity:0.85;margin-top:2px" id="progSubtitulo">¡Sigue aprendiendo!</div>
     </div>
     <div style="text-align:center;background:rgba(255,255,255,0.2);border-radius:12px;padding:10px 14px">
@@ -4773,7 +5263,24 @@ async function guardarTodoA_Drive_silencioso(){
 <div style="max-width:680px;margin:0 auto;padding:20px 16px">
 
   <!-- Pantalla de configuración -->
-  <div id="examenConfig">
+  <div <!-- Panel de bloqueo cuando el examen no está habilitado -->
+<div id="examenLock" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center">
+  <div style="font-size:64px;margin-bottom:16px">🔒</div>
+  <h2 style="margin-bottom:8px;color:var(--text)">Examen Bloqueado</h2>
+  <p style="font-size:14px;color:var(--muted);margin-bottom:24px;max-width:340px">Tu profesor debe habilitarte el examen.<br>Cuando tengas el código, ingrésalo aquí:</p>
+  <div style="background:var(--card);border-radius:14px;padding:20px;width:100%;max-width:340px;box-shadow:0 2px 12px rgba(0,0,0,.07)">
+    <input type="text" id="inputCodigoExamen" placeholder="Código de examen (EX-XXXX)" 
+      style="width:100%;padding:12px;border-radius:8px;border:1.5px solid #ddd;font-size:15px;font-weight:700;text-align:center;letter-spacing:2px;text-transform:uppercase;outline:none;box-sizing:border-box;margin-bottom:12px"
+      onkeydown="if(event.key==='Enter')desbloquearExamen()">
+    <button onclick="desbloquearExamen()" style="width:100%;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:800;cursor:pointer">
+      <i class="fas fa-unlock"></i> Desbloquear Examen
+    </button>
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin-top:16px">¿No tienes código? Pídelo a tu profesor 👨‍🏫</p>
+  <button onclick="showView('dashboard')" style="margin-top:12px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px">← Volver al inicio</button>
+</div>
+
+id="examenConfig">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
       <button onclick="showView('dashboard')" style="background:none;border:none;font-size:22px;cursor:pointer">←</button>
       <h2 style="margin:0">Modo Examen 🎓</h2>
@@ -5162,12 +5669,35 @@ async function guardarTodoA_Drive_silencioso(){
 <!-- MODAL NOMBRE -->
 <div class="modal-ov open" id="nombreModal">
 <div class="modal-bx" style="text-align:center">
-<div style="font-size:52px;margin-bottom:8px">👋</div>
-<h3>¡Bienvenido a Aprende Fácil!</h3>
-<p style="font-size:14px;color:var(--muted);margin-bottom:20px">¿Cómo te llamas?</p>
-<input type="text" class="modal-inp" id="inputNombre" placeholder="Escribe tu nombre..." maxlength="25" onkeydown="if(event.key==='Enter')guardarNombre()">
-<button class="btn-mok" onclick="guardarNombre()" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe)">¡Empezar! 🚀</button>
-<button class="btn-mcancel" onclick="guardarNombre()">Continuar sin nombre</button>
+<div style="font-size:52px;margin-bottom:8px">🦉</div>
+<h3 style="margin-bottom:6px">¡Bienvenido a Aprende Fácil!</h3>
+<p style="font-size:13px;color:var(--muted);margin-bottom:18px">Tu profesor te dio un código de acceso</p>
+
+<!-- Modo con código -->
+<div id="modoConCodigo">
+  <input type="text" class="modal-inp" id="inputCodigo" placeholder="Código de acceso (ej: EST-001)" maxlength="20"
+    style="text-transform:uppercase;letter-spacing:2px;font-weight:700;text-align:center"
+    onkeydown="if(event.key==='Enter')validarCodigo()">
+  <button class="btn-mok" onclick="validarCodigo()" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe)">
+    <i class="fas fa-key"></i> Ingresar con código
+  </button>
+</div>
+
+<!-- Separador -->
+<div style="display:flex;align-items:center;gap:10px;margin:12px 0">
+  <div style="flex:1;height:1px;background:#eee"></div>
+  <span style="font-size:11px;color:#aaa">o continúa sin código</span>
+  <div style="flex:1;height:1px;background:#eee"></div>
+</div>
+
+<!-- Modo sin código (nombre libre) -->
+<div id="modoSinCodigo">
+  <input type="text" class="modal-inp" id="inputNombre" placeholder="Escribe tu nombre..." maxlength="25"
+    onkeydown="if(event.key==='Enter')guardarNombre()">
+  <button class="btn-mok" onclick="guardarNombre()" style="background:linear-gradient(135deg,#00b894,#00cec9)">
+    ¡Explorar sin código! 🚀
+  </button>
+</div>
 </div>
 </div>
 <!-- MODAL PERFIL -->
