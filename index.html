@@ -1808,20 +1808,28 @@ async function _iaLlamarAPI(tema){
 
 // Aplicar el resultado al tema en db.temas
 function _iaAplicarResultado(tema, resultado){
-  var conceptoBase = resultado.concepto || tema.concepto || '';
-  var ej1 = resultado.ejemplo1 || '';
-  var ej2 = resultado.ejemplo2 || '';
-
-  // Construir concepto completo
-  var conceptoCompleto = conceptoBase;
-  if(ej1) conceptoCompleto += '\n\n📌 Ejemplo 1: ' + ej1;
-  if(ej2) conceptoCompleto += '\n\n📌 Ejemplo 2: ' + ej2;
-
-  // Actualizar el tema en db.temas
+  // Actualizar el tema en db.temas con todos los campos nuevos
   var idx = db.temas.findIndex(function(t){ return t.id === tema.id; });
-  if(idx >= 0){
-    db.temas[idx].concepto = conceptoCompleto;
-  }
+  if(idx < 0) return;
+
+  // Si el contenido es string, parsearlo
+  var c = db.temas[idx].contenido;
+  if(typeof c === 'string'){ try{ c = JSON.parse(c); }catch(e){ c = {}; } }
+  c = c || {};
+
+  // Actualizar campos del contenido
+  if(resultado.concepto)          c.concepto          = resultado.concepto;
+  if(resultado.ejemplo1)          c.ejemplo1          = resultado.ejemplo1;
+  if(resultado.ejemplo2)          c.ejemplo2          = resultado.ejemplo2;
+  if(resultado.historia)          c.historia          = resultado.historia;
+  if(resultado.palabrasClave)     c.palabrasClave     = resultado.palabrasClave;
+  if(resultado.conexionPeru)      c.conexionPeru      = resultado.conexionPeru;
+  if(resultado.miniActividad)     c.miniActividad     = resultado.miniActividad;
+  if(resultado.preguntaReflexion) c.preguntaReflexion = resultado.preguntaReflexion;
+
+  // También actualizar el campo concepto del tema directamente
+  db.temas[idx].concepto  = resultado.concepto || tema.concepto;
+  db.temas[idx].contenido = JSON.stringify(c);
 
   // Guardar en localStorage
   localStorage.setItem('af_db', JSON.stringify(db));
@@ -1959,10 +1967,15 @@ function _iaMostrarPreview(tema, res){
   if(!preview) return;
   preview.style.display = 'block';
   if(titulo) titulo.textContent = tema.id + ' — ' + tema.titulo + ' ('+tema.nivel+' '+tema.grado+'° · '+tema.curso+')';
-  if(cont) cont.innerHTML =
-    '<strong>Concepto:</strong> '+(res.concepto||'')+'<br><br>'+
-    '<strong>📌 Ejemplo 1:</strong> '+(res.ejemplo1||'')+'<br><br>'+
-    '<strong>📌 Ejemplo 2:</strong> '+(res.ejemplo2||'');
+  var html = '';
+  if(res.concepto)          html += '<div style="margin-bottom:8px"><strong style="color:#6c5ce7">🎯 Concepto:</strong><br>'+res.concepto+'</div>';
+  if(res.historia)          html += '<div style="margin-bottom:8px"><strong style="color:#f39c12">📖 Historia:</strong><br><em>'+res.historia+'</em></div>';
+  if(res.ejemplo1)          html += '<div style="margin-bottom:6px"><strong style="color:#27ae60">📌 Ejemplo 1:</strong> '+res.ejemplo1+'</div>';
+  if(res.ejemplo2)          html += '<div style="margin-bottom:8px"><strong style="color:#3498db">📌 Ejemplo 2:</strong> '+res.ejemplo2+'</div>';
+  if(res.conexionPeru)      html += '<div style="margin-bottom:6px"><strong style="color:#e74c3c">🌎 Perú:</strong> '+res.conexionPeru+'</div>';
+  if(res.miniActividad)     html += '<div style="margin-bottom:6px"><strong style="color:#6c5ce7">🎯 Actividad:</strong> '+res.miniActividad+'</div>';
+  if(res.preguntaReflexion) html += '<div><strong style="color:#00b894">💡 Reflexión:</strong> '+res.preguntaReflexion+'</div>';
+  if(cont) cont.innerHTML = html || '(sin contenido)';
 }
 
 function _iaLog(msg, tipo){
@@ -2539,58 +2552,234 @@ function renderDashboardItems(){
 var activeLesson=null,activeMqIndex=0,activeMqQuestions=[],mqCorrectCount=0;
 
 function verLeccion(id){
-  var t=db.temas.find(function(x){return x.id===id;});if(!t)return;
-  activeLesson=t;showView('lesson');
-  document.getElementById('lesPath').textContent=t.nivel.toUpperCase()+' > Grado '+t.grado+' > '+t.curso.toUpperCase();
-  document.getElementById('lesTitle').textContent=t.titulo;
-  document.getElementById('lesSub').textContent=t.subtitulo||'';
-  document.getElementById('lesConcepto').textContent=t.concepto||'';
-  var cc=cursColors[t.curso]||{g1:'#3498db',g2:'#2ecc71',i:'📚'};
-  var hero=document.getElementById('lesHero');
-  hero.style.background='linear-gradient(135deg,'+cc.g1+','+cc.g2+')';
-  var heroImg=t.imagen||cc.img||'';
-  // Hero siempre usa solo el gradiente de color (imagen va en bloque separado)
-  hero.style.backgroundImage='linear-gradient(135deg,'+cc.g1+','+cc.g2+')';
-  // Mostrar imagen explicativa en el bloque de concepto
+  var t = db.temas.find(function(x){ return x.id===id; });
+  if(!t) return;
+  activeLesson = t;
+  showView('lesson');
+
+  var cc = cursColors[t.curso] || {g1:'#3498db', g2:'#2ecc71', i:'📚'};
+
+  // ── Header ──────────────────────────────────────────────
+  document.getElementById('lesPath').textContent = t.nivel.toUpperCase()+' > Grado '+t.grado+' > '+t.curso.toUpperCase();
+  document.getElementById('lesTitle').textContent = t.titulo;
+  document.getElementById('lesSub').textContent   = t.subtitulo || '';
+  document.getElementById('lesHeroIcon').textContent = cc.i;
+  var hero = document.getElementById('lesHero');
+  hero.style.background = 'linear-gradient(135deg,'+cc.g1+','+cc.g2+')';
+
+  // ── Parsear contenido JSON si es necesario ───────────────
+  var c = t.contenido;
+  if(typeof c === 'string'){
+    try{ c = JSON.parse(c); }catch(e){ c = {}; }
+  }
+  c = c || {};
+
+  // ── BLOQUE 1: Concepto ───────────────────────────────────
+  // Extraer el concepto limpio (sin los ejemplos inline que venían antes)
+  var conceptoTexto = c.concepto || t.concepto || '';
+  // Si el concepto tiene "📌 Ejemplo" integrado, separarlo
+  var parteConcepto = conceptoTexto;
+  var ej1Inline = '', ej2Inline = '';
+  if(conceptoTexto.indexOf('📌 Ejemplo 1:') >= 0){
+    var parts = conceptoTexto.split('📌 Ejemplo 1:');
+    parteConcepto = parts[0].trim();
+    var resto = parts[1] || '';
+    var ejParts = resto.split('📌 Ejemplo 2:');
+    ej1Inline = ejParts[0].trim();
+    ej2Inline = (ejParts[1]||'').trim();
+  }
+  document.getElementById('lesConcepto').textContent = parteConcepto;
+
+  // ── BLOQUE 2: Palabras Clave ─────────────────────────────
+  var palabrasBox = document.getElementById('lesPalabrasBox');
+  var palabrasEl  = document.getElementById('lesPalabras');
+  var palabras = c.palabrasClave || [];
+  if(palabrasBox && palabrasEl){
+    if(palabras.length > 0){
+      palabrasBox.style.display = 'block';
+      palabrasEl.innerHTML = palabras.map(function(p){
+        var key = typeof p === 'string' ? p : (p.termino||p.palabra||'');
+        var def = typeof p === 'object' ? (p.definicion||p.def||'') : '';
+        return '<div style="background:'+cc.g1+'20;border:1.5px solid '+cc.g1+'40;border-radius:10px;padding:8px 12px;max-width:220px">'+
+          '<div style="font-size:12px;font-weight:800;color:'+cc.g1+'">'+key+'</div>'+
+          (def?'<div style="font-size:11px;color:var(--muted);margin-top:3px">'+def+'</div>':'')+
+        '</div>';
+      }).join('');
+    } else {
+      palabrasBox.style.display = 'none';
+    }
+  }
+
+  // ── BLOQUE 3: Historia ───────────────────────────────────
+  var historiaBox = document.getElementById('lesHistoriaBox');
+  var historiaEl  = document.getElementById('lesHistoria');
+  var historia = c.historia || '';
+  if(historiaBox && historiaEl){
+    if(historia){
+      historiaBox.style.display = 'block';
+      historiaEl.textContent = historia;
+    } else {
+      historiaBox.style.display = 'none';
+    }
+  }
+
+  // ── BLOQUE 4: Ejemplos ───────────────────────────────────
+  var ej1 = c.ejemplo1 || ej1Inline || '';
+  var ej2 = c.ejemplo2 || ej2Inline || '';
+  var ejBox = document.getElementById('lesEjemplosBox');
+  if(ejBox){
+    if(ej1 || ej2){
+      ejBox.style.display = 'block';
+      var ej1El = document.getElementById('lesEjemplo1Text');
+      var ej2El = document.getElementById('lesEjemplo2Text');
+      if(ej1El) ej1El.textContent = ej1;
+      if(ej2El) ej2El.textContent = ej2;
+      // Ocultar el bloque de ejemplo si está vacío
+      var ej1Card = document.getElementById('lesEjemplo1');
+      var ej2Card = document.getElementById('lesEjemplo2');
+      if(ej1Card) ej1Card.style.display = ej1 ? 'block' : 'none';
+      if(ej2Card) ej2Card.style.display = ej2 ? 'block' : 'none';
+    } else {
+      ejBox.style.display = 'none';
+    }
+  }
+
+  // ── BLOQUE 5: Conexión con el Perú ──────────────────────
+  var peruBox  = document.getElementById('lesPeruBox');
+  var peruEl   = document.getElementById('lesPeruText');
+  var peru = c.conexionPeru || c.conexion_peru || '';
+  if(peruBox && peruEl){
+    if(peru){
+      peruBox.style.display = 'block';
+      peruEl.textContent = peru;
+    } else {
+      peruBox.style.display = 'none';
+    }
+  }
+
+  // ── BLOQUE 6: Mini Actividad ─────────────────────────────
+  var actBox = document.getElementById('lesMiniActBox');
+  var actEl  = document.getElementById('lesMiniActText');
+  var actividad = c.miniActividad || c.mini_actividad || '';
+  if(actBox && actEl){
+    if(actividad){
+      actBox.style.display = 'block';
+      actEl.textContent = actividad;
+    } else {
+      actBox.style.display = 'none';
+    }
+  }
+
+  // ── BLOQUE 7: Pregunta de Reflexión ─────────────────────
+  var refBox = document.getElementById('lesReflexionBox');
+  var refEl  = document.getElementById('lesReflexion');
+  var reflexion = c.preguntaReflexion || c.pregunta_reflexion || '';
+  if(refBox && refEl){
+    if(reflexion){
+      refBox.style.display = 'block';
+      refEl.textContent = reflexion;
+    } else {
+      refBox.style.display = 'none';
+    }
+  }
+
+  // ── BLOQUE 8: Video ──────────────────────────────────────
+  var vWrap = document.getElementById('lesVideoWrap');
+  var vBlock = document.getElementById('lesVideoBlock');
+  var videoUrl = c.video || t.video || '';
+  var bloquearYT = window._bloquearYT || localStorage.getItem('af_cfg_bloquearYT')==='1';
+
+  if(videoUrl && !(bloquearYT && videoUrl.includes('youtube'))){
+    if(vBlock) vBlock.style.display = 'block';
+    vWrap.style.display = 'block';
+    var videoData = detectarTipoVideo(videoUrl);
+    var embedUrl  = videoData ? getVideoEmbedUrl(videoData) : null;
+    var iframe    = document.getElementById('lesVideoFrame');
+    if(iframe && embedUrl) iframe.src = embedUrl;
+  } else {
+    if(vBlock) vBlock.style.display = 'none';
+    vWrap.style.display = 'none';
+    var iframe2 = document.getElementById('lesVideoFrame');
+    if(iframe2) iframe2.src = '';
+  }
+
+  // ── BLOQUE 9: Imagen ─────────────────────────────────────
   var imgBox = document.getElementById('lesImagenBox');
   var imgEl  = document.getElementById('lesImagenImg');
+  var imagen = c.imagen || t.imagen || '';
   if(imgBox && imgEl){
-    if(heroImg){
-      imgEl.src = heroImg;
+    if(imagen){
+      imgEl.src = imagen;
       imgBox.style.display = 'block';
     } else {
       imgBox.style.display = 'none';
       imgEl.src = '';
     }
-  }  document.getElementById('lesHeroIcon').textContent=cc.i;
-  var vWrap=document.getElementById('lesVideoWrap');
-  if(t.video){var vId=extractYtId(t.video);if(vId){vWrap.style.display='block';var videoData=detectarTipoVideo(t.video);
-      var embedUrl=videoData?getVideoEmbedUrl(videoData):null;
-      var iframe=document.getElementById('lesVideoFrame');
-      if(iframe && embedUrl) iframe.src=embedUrl;
-      var ytLink=document.getElementById('lesVideoLink');
-      if(ytLink){
-        ytLink.href=getVideoExtLink(videoData,t.video);
-        ytLink.style.display='flex';
-        // Cambiar texto según tipo
-        var tipo=videoData?videoData.tipo:'youtube';
-        ytLink.innerHTML='<i class="fas fa-external-link-alt"></i> '+(tipo==='drive'?'Abrir en Drive':tipo==='cloudflare'?'Abrir video':'Abrir en YouTube');
-      }}else{vWrap.style.display='none';var nl=document.getElementById('lesVideoLink');if(nl)nl.style.display='none';}}else{vWrap.style.display='none';var nl2=document.getElementById('lesVideoLink');if(nl2)nl2.style.display='none';}
-  var fBox=document.getElementById('lesFactBox');
-  if(t.sabiasQue){fBox.style.display='flex';document.getElementById('lesFact').textContent=t.sabiasQue;}else{fBox.style.display='none';}
-  var sBox=document.getElementById('lesStepsBox');sBox.innerHTML='';
-  if(t.pasos&&t.pasos.length>0){t.pasos.forEach(function(p,i){sBox.innerHTML+='<div class="lesson-step"><div class="lesson-step-num" style="background:'+cc.g1+'">'+(i+1)+'</div><div class="lesson-step-text">'+p+'</div></div>';});}
-  else{sBox.innerHTML='<p style="font-size:13px;color:var(--muted);margin:0">No se detallaron pasos para este tema.</p>';}
-  var svgW=document.getElementById('lesSvgWrap');svgW.innerHTML='';
-  if(t.svgTipo){svgW.style.display='flex';svgW.innerHTML=getSvgTemplate(t.svgTipo,t.svgData);}else{svgW.style.display='none';}
-  var gBlock=document.getElementById('gameBlock');var mqBlock=document.getElementById('mqBlock');
-  var juegoId=t.juegoId;
-  if(!juegoId){var autoJ=gameLibrary.find(function(g){return g.tema&&g.tema.toLowerCase()===(t.titulo||'').toLowerCase();})||gameLibrary.find(function(g){return String(g.grado)===String(t.grado)&&(g.curso||'').toLowerCase()===(t.curso||'').toLowerCase();})||gameLibrary.find(function(g){return(g.curso||'').toLowerCase()===(t.curso||'').toLowerCase();});if(autoJ)juegoId=autoJ.id;}
-  if(juegoId){gBlock.style.display='block';mqBlock.style.display='none';initGameInLesson(juegoId);}
-  else{gBlock.style.display='none';mqBlock.style.display='block';activeMqQuestions=db.preguntas.filter(function(p){return p.temaId===t.id;});activeMqIndex=0;mqCorrectCount=0;document.getElementById('lesScoreBox').style.display='none';
-    if(activeMqQuestions.length===0){document.getElementById('mqPregunta').textContent='¡Completaste la lectura de este tema! 🎉';document.getElementById('mqOpts').innerHTML='';document.getElementById('mqFeedback').className='mq-fb';document.getElementById('mqNextBtn').style.display='none';guardarProgresoLeccion(t.id,100);}
-    else{renderMqQuestion();}}
+  }
+
+  // ── BLOQUE 10: Pasos ─────────────────────────────────────
+  var sBox = document.getElementById('lesStepsBox');
+  sBox.innerHTML = '';
+  var pasos = c.pasos || t.pasos || [];
+  if(pasos.length > 0){
+    pasos.forEach(function(p, i){
+      sBox.innerHTML += '<div class="lesson-step">'+
+        '<div class="lesson-step-num" style="background:'+cc.g1+'">'+(i+1)+'</div>'+
+        '<div class="lesson-step-text">'+p+'</div>'+
+      '</div>';
+    });
+  } else {
+    sBox.innerHTML = '<p style="font-size:13px;color:var(--muted);margin:0">No se detallaron pasos para este tema.</p>';
+  }
+
+  // ── BLOQUE 11: Dato Curioso ───────────────────────────────
+  var fBox = document.getElementById('lesFactBox');
+  var sabiasQue = c.sabiasQue || t.sabiasQue || '';
+  if(fBox){
+    if(sabiasQue){
+      fBox.style.display = 'flex';
+      document.getElementById('lesFact').textContent = sabiasQue;
+    } else {
+      fBox.style.display = 'none';
+    }
+  }
+
+  // ── SVG ───────────────────────────────────────────────────
+  var svgW = document.getElementById('lesSvgWrap');
+  svgW.innerHTML = '';
+  if(t.svgTipo){ svgW.style.display='flex'; svgW.innerHTML=getSvgTemplate(t.svgTipo,t.svgData); }
+  else { svgW.style.display='none'; }
+
+  // ── Juego o Mini-Quiz ────────────────────────────────────
+  var gBlock  = document.getElementById('gameBlock');
+  var mqBlock = document.getElementById('mqBlock');
+  var juegoId = t.juegoId;
+  if(!juegoId){
+    var autoJ = gameLibrary.find(function(g){ return g.tema&&g.tema.toLowerCase()===(t.titulo||'').toLowerCase(); }) ||
+      gameLibrary.find(function(g){ return String(g.grado)===String(t.grado)&&(g.curso||'').toLowerCase()===(t.curso||'').toLowerCase(); }) ||
+      gameLibrary.find(function(g){ return (g.curso||'').toLowerCase()===(t.curso||'').toLowerCase(); });
+    if(autoJ) juegoId = autoJ.id;
+  }
+  if(juegoId){
+    gBlock.style.display='block'; mqBlock.style.display='none';
+    initGameInLesson(juegoId);
+  } else {
+    gBlock.style.display='none'; mqBlock.style.display='block';
+    activeMqQuestions = db.preguntas.filter(function(p){ return p.temaId===t.id; });
+    activeMqIndex=0; mqCorrectCount=0;
+    document.getElementById('lesScoreBox').style.display='none';
+    if(activeMqQuestions.length===0){
+      document.getElementById('mqPregunta').textContent='¡Completaste la lectura de este tema! 🎉';
+      document.getElementById('mqOpts').innerHTML='';
+      document.getElementById('mqFeedback').className='mq-fb';
+      document.getElementById('mqNextBtn').style.display='none';
+      guardarProgresoLeccion(t.id, 100);
+    } else {
+      renderMqQuestion();
+    }
+  }
 }
+
 
 function extractYtId(url){
   if(!url) return null;
@@ -4355,44 +4544,99 @@ async function guardarTodoA_Drive_silencioso(){
 <div><h1 id="lesTitle">Título de la Lección</h1><p id="lesSub">Subtítulo o breve descripción</p></div>
 </div>
 <div class="lesson-grid">
-<div class="lesson-block">
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-<h3 style="margin:0"><i class="fas fa-book-open" style="color:var(--azul)"></i> Concepto Clave</h3>
-<button id="btnTTS" onclick="toggleTTS()" title="Escuchar en voz alta"
-  style="display:flex;align-items:center;gap:5px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;border:none;border-radius:20px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">
-  <i class="fas fa-volume-up" id="ttsIcon"></i> <span id="ttsTxt">Escuchar</span>
-</button>
-</div>
-<p id="lesConcepto">Contenido teórico aquí...</p>
-<div class="lesson-svg-wrap" id="lesSvgWrap"></div>
-<!-- Imagen explicativa de apoyo -->
-<div id="lesImagenBox" style="display:none;margin-top:14px">
-  <img id="lesImagenImg" src="" alt="Imagen del tema" 
-    style="width:100%;max-height:220px;object-fit:contain;border-radius:10px;border:1px solid #eee;background:#f8f9fa;padding:4px">
-  <p style="font-size:11px;color:#999;text-align:center;margin:4px 0 0">Imagen explicativa</p>
-</div>
-</div>
-<div class="lesson-block">
-<h3><i class="fas fa-play-circle" style="color:var(--rojo)"></i> Video Educativo</h3>
-<div class="lesson-video-wrap" id="lesVideoWrap">
-  <iframe id="lesVideoFrame" src="" 
-    allowfullscreen allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-    referrerpolicy="strict-origin-when-cross-origin"
-    style="width:100%;height:100%;border:none;border-radius:10px 10px 0 0">
-  </iframe>
-  <!-- Capa bloqueadora de clics en zona de sugerencias -->
-  <div id="videoOverlay" style="display:none;position:absolute;bottom:0;left:0;right:0;height:25%;background:transparent;z-index:10;cursor:default" title="Video educativo"></div>
-</div>
-<!-- Enlace YouTube deshabilitado para control escolar -->
-<div class="lesson-fact" id="lesFactBox">
-<i class="fas fa-lightbulb" style="font-size:18px;color:#f39c12"></i>
-<span id="lesFact">¿Sabías que...?</span>
-</div>
-</div>
+
+<!-- BLOQUE 1: CONCEPTO CLAVE -->
 <div class="lesson-block lesson-full">
-<h3><i class="fas fa-list-ol" style="color:var(--verde)"></i> Pasos o Ejemplos</h3>
-<div id="lesStepsBox"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <h3 style="margin:0;display:flex;align-items:center;gap:8px"><span style="font-size:20px">🎯</span> Concepto Clave</h3>
+    <button id="btnTTS" onclick="toggleTTS()" title="Escuchar en voz alta"
+      style="display:flex;align-items:center;gap:5px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;border:none;border-radius:20px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">
+      <i class="fas fa-volume-up" id="ttsIcon"></i> <span id="ttsTxt">Escuchar</span>
+    </button>
+  </div>
+  <p id="lesConcepto" style="font-size:14px;line-height:1.8;color:var(--text);margin:0"></p>
+  <div class="lesson-svg-wrap" id="lesSvgWrap"></div>
 </div>
+
+<!-- BLOQUE 2: PALABRAS CLAVE -->
+<div class="lesson-block lesson-full" id="lesPalabrasBox" style="display:none">
+  <h3 style="margin:0 0 12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">🔑</span> Palabras Clave</h3>
+  <div id="lesPalabras" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+</div>
+
+<!-- BLOQUE 3: HISTORIA -->
+<div class="lesson-block lesson-full" id="lesHistoriaBox" style="display:none">
+  <h3 style="margin:0 0 12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">📖</span> Historia</h3>
+  <div id="lesHistoria" style="background:linear-gradient(135deg,#ffeaa7,#fdcb6e20);border-left:4px solid #f39c12;border-radius:0 10px 10px 0;padding:14px 16px;font-size:13px;line-height:1.8;color:var(--text);font-style:italic"></div>
+</div>
+
+<!-- BLOQUE 4: EJEMPLOS -->
+<div class="lesson-block lesson-full" id="lesEjemplosBox" style="display:none">
+  <h3 style="margin:0 0 12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">📌</span> Ejemplos</h3>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div id="lesEjemplo1" style="background:linear-gradient(135deg,#d5f5e3,#a9dfbf30);border:1.5px solid #27ae6040;border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.7;color:var(--text)">
+      <div style="font-size:11px;font-weight:800;color:#27ae60;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">📌 Ejemplo 1</div>
+      <span id="lesEjemplo1Text"></span>
+    </div>
+    <div id="lesEjemplo2" style="background:linear-gradient(135deg,#dfe6e9,#b2bec330);border:1.5px solid #74b9ff40;border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.7;color:var(--text)">
+      <div style="font-size:11px;font-weight:800;color:#3498db;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">📌 Ejemplo 2</div>
+      <span id="lesEjemplo2Text"></span>
+    </div>
+  </div>
+</div>
+
+<!-- BLOQUE 5: CONEXIÓN CON EL PERÚ -->
+<div class="lesson-block lesson-full" id="lesPeruBox" style="display:none">
+  <h3 style="margin:0 0 12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">🌎</span> Conexión con el Perú</h3>
+  <div id="lesPeruText" style="background:linear-gradient(135deg,#d63031,#e17055);border-radius:12px;padding:14px 16px;font-size:13px;line-height:1.7;color:#fff"></div>
+</div>
+
+<!-- BLOQUE 6: MINI ACTIVIDAD -->
+<div class="lesson-block lesson-full" id="lesMiniActBox" style="display:none">
+  <h3 style="margin:0 0 12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">🎯</span> Mini Actividad</h3>
+  <div id="lesMiniAct" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);border-radius:12px;padding:16px;color:#fff;font-size:13px;line-height:1.7">
+    <div style="font-size:11px;font-weight:800;opacity:.85;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Hazlo ahora — sin internet</div>
+    <span id="lesMiniActText"></span>
+  </div>
+</div>
+
+<!-- BLOQUE 7: PREGUNTA DE REFLEXIÓN -->
+<div class="lesson-block lesson-full" id="lesReflexionBox" style="display:none">
+  <h3 style="margin:0 0 12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">💡</span> Para Pensar</h3>
+  <div id="lesReflexion" style="background:linear-gradient(135deg,#00b894,#00cec9);border-radius:12px;padding:16px;color:#fff;font-size:14px;line-height:1.7;font-weight:600;text-align:center"></div>
+</div>
+
+<!-- BLOQUE 8: VIDEO -->
+<div class="lesson-block lesson-full" id="lesVideoBlock">
+  <h3 style="margin:0 0 12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">🎬</span> Video Educativo</h3>
+  <div class="lesson-video-wrap" id="lesVideoWrap">
+    <iframe id="lesVideoFrame" src="" 
+      allowfullscreen allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+      referrerpolicy="strict-origin-when-cross-origin"
+      style="width:100%;height:100%;border:none;border-radius:10px">
+    </iframe>
+  </div>
+</div>
+
+<!-- BLOQUE 9: IMAGEN -->
+<div id="lesImagenBox" class="lesson-block lesson-full" style="display:none">
+  <h3 style="margin:0 0 12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">🖼️</span> Imagen del Tema</h3>
+  <img id="lesImagenImg" src="" alt="Imagen del tema" 
+    style="width:100%;max-height:260px;object-fit:contain;border-radius:10px;border:1px solid #eee;background:#f8f9fa;padding:4px">
+</div>
+
+<!-- BLOQUE 10: PASOS -->
+<div class="lesson-block lesson-full">
+  <h3 style="margin:0 0 12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">🪜</span> Pasos</h3>
+  <div id="lesStepsBox"></div>
+</div>
+
+<!-- BLOQUE 11: DATO CURIOSO -->
+<div class="lesson-fact" id="lesFactBox" style="display:none">
+  <i class="fas fa-lightbulb" style="font-size:18px;color:#f39c12"></i>
+  <span id="lesFact">¿Sabías que...?</span>
+</div>
+
 </div>
 <div class="mini-quiz-block" id="mqBlock">
 <h3><i class="fas fa-star" style="color:var(--amarillo)"></i> Mini-Reto Final</h3>
