@@ -1382,18 +1382,7 @@ function finalizarExamen(){
   if(pct >= 70) lanzarConfeti();
 }
 
-function verExamen(){
-  // Resetear todas las pantallas del examen
-  var cfg=document.getElementById('examenConfig');
-  var act=document.getElementById('examenActivo');
-  var res=document.getElementById('examenResultado');
-  if(cfg){cfg.style.display='block';cfg.style.opacity='1';}
-  if(act){act.style.display='none';}
-  if(res){res.style.display='none';}
-  // Mostrar la vista primero, luego actualizar disponibles
-  showView('examen');
-  setTimeout(function(){ actualizarDisponibles(); }, 100);
-}
+// verExamen() → ver versión actualizada abajo
 
 // ═══════════════════════════════════════════════════════════
 //  MÓDULO 4: CONFETI ANIMADO
@@ -1698,48 +1687,7 @@ function guardarProgresoLeccion(tId, pct){
 }
 
 // Ver progreso de todos los alumnos desde Drive (para el admin)
-function verProgresosDrive(){
-  Swal.fire({
-    title:'Cargando progreso de alumnos...',
-    html:'<i class="fas fa-spinner fa-spin" style="font-size:28px;color:#6c5ce7"></i>',
-    allowOutsideClick:false, showConfirmButton:false, timer:15000
-  });
-  var cb = 'cb_prog_'+Date.now();
-  jsonpGet(APPS_SCRIPT_URL+'?action=getProgreso', cb)
-    .then(function(res){
-      Swal.close();
-      if(!res||!res.ok||!res.data||res.data.length===0){
-        Swal.fire({icon:'info',title:'Sin datos',
-          text:'No hay progreso de alumnos sincronizado aún.',
-          confirmButtonColor:'#6c5ce7'});
-        return;
-      }
-      // Agrupar por alumno
-      var alumnos = {};
-      res.data.forEach(function(r){
-        var a = r.alumno||'Desconocido';
-        if(!alumnos[a]) alumnos[a]={total:0,completados:0};
-        alumnos[a].total++;
-        if(parseInt(r.pct||0)>=50) alumnos[a].completados++;
-      });
-      var html='<div style="max-height:400px;overflow-y:auto">';
-      Object.keys(alumnos).sort().forEach(function(a){
-        var d=alumnos[a];
-        var pct=Math.round(d.completados/d.total*100);
-        html+='<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #eee">'+
-          '<div><b>'+a+'</b></div>'+
-          '<div style="color:#6c5ce7;font-weight:700">'+d.completados+'/'+d.total+' ('+pct+'%)</div>'+
-          '</div>';
-      });
-      html+='</div>';
-      Swal.fire({title:'👥 Progreso de Alumnos',html:html,
-        confirmButtonColor:'#6c5ce7',width:'500px'});
-    })
-    .catch(function(){
-      Swal.close();
-      Swal.fire({icon:'error',title:'Error',text:'No se pudo cargar el progreso desde Drive.',confirmButtonColor:'#6c5ce7'});
-    });
-}
+// verProgreso() → ver versión arriba
 
 // ═══════════════════════════════════════════════════════════
 //  MÓDULO: ENRIQUECEDOR DE CONTENIDO CON IA
@@ -2649,112 +2597,123 @@ function habilitarExamenGrado(nivel, grado){
 // ═══════════════════════════════════════════════════════════
 
 // Ver progreso detallado de un alumno específico (desde admin)
+// verProgreso() → ver versión arriba
+
+// ── Ver progreso de alumnos desde Drive (admin) ───────────────
+function verProgresosDrive(){
+  Swal.fire({
+    title:'Cargando progreso de alumnos...',
+    html:'<i class="fas fa-spinner fa-spin" style="font-size:28px;color:#6c5ce7"></i>',
+    allowOutsideClick:false, showConfirmButton:false, timer:15000
+  });
+  var cb = 'cb_prog_'+Date.now();
+  jsonpGet(APPS_SCRIPT_URL+'?action=getProgreso', cb)
+    .then(function(res){
+      Swal.close();
+      if(!res||!res.ok||!res.data||res.data.length===0){
+        Swal.fire({icon:'info',title:'Sin datos',
+          text:'No hay progreso de alumnos sincronizado aún.',
+          confirmButtonColor:'#6c5ce7'});
+        return;
+      }
+      var alumnos = {};
+      res.data.forEach(function(r){
+        var a = r.alumno||'Desconocido';
+        if(!alumnos[a]) alumnos[a]={total:0,completados:0};
+        alumnos[a].total++;
+        if(parseInt(r.pct||0)>=50) alumnos[a].completados++;
+      });
+      var html='<div style="max-height:400px;overflow-y:auto">';
+      Object.keys(alumnos).sort().forEach(function(a){
+        var d=alumnos[a];
+        var pct=Math.round(d.completados/d.total*100);
+        html+='<div style="display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #eee">'+
+          '<div><b>'+a+'</b></div>'+
+          '<div style="color:#6c5ce7;font-weight:700">'+d.completados+'/'+d.total+' ('+pct+'%)</div>'+
+          '</div>';
+      });
+      html+='</div>';
+      Swal.fire({title:'👥 Progreso de Alumnos',html:html,
+        confirmButtonColor:'#6c5ce7',width:'500px'});
+    })
+    .catch(function(){
+      Swal.close();
+      Swal.fire({icon:'error',title:'Error',text:'No se pudo cargar el progreso desde Drive.',confirmButtonColor:'#6c5ce7'});
+    });
+}
+
+// ── Ver progreso de un alumno específico con gráficos ─────────
 function verProgresoAlumno(codigoAlumno){
   var alumnos = _cargarAlumnosDB();
   var alumno  = alumnos.find(function(a){ return a.codigo===codigoAlumno; });
   if(!alumno){ showToast('Alumno no encontrado'); return; }
 
-  // Cargar progreso del Drive para ese alumno
-  var cbName = 'cb_prog_alumno_'+Date.now();
-  jsonpGet(APPS_SCRIPT_URL+'?action=getProgreso&alumno='+encodeURIComponent(alumno.nombre), cbName)
-    .then(function(res){
-      var progData = (res && res.data) ? res.data.filter(function(r){ return r.alumno===alumno.nombre; }) : [];
+  var CC = {matematica:{color:'#3498db',icon:'🔢',label:'Matemática'},
+    comunicacion:{color:'#e74c3c',icon:'📚',label:'Comunicación'},
+    ciencia:{color:'#2ecc71',icon:'🔬',label:'Ciencia'},
+    personal:{color:'#f39c12',icon:'🌍',label:'Personal Social'},
+    historia:{color:'#9b59b6',icon:'⚔️',label:'Historia'},
+    ingles:{color:'#1abc9c',icon:'🌐',label:'Inglés'},
+    arte:{color:'#e91e63',icon:'🎨',label:'Arte'},
+    educacion_fisica:{color:'#ff9800',icon:'⚽',label:'Ed. Física'}};
 
-      // Agrupar por curso
-      var porCurso = {};
-      var CURSOS = ['matematica','comunicacion','ciencia','personal','historia','ingles','arte','educacion_fisica'];
-      var CC = {matematica:{color:'#3498db',icon:'🔢',label:'Matemática'},
-        comunicacion:{color:'#e74c3c',icon:'📚',label:'Comunicación'},
-        ciencia:{color:'#2ecc71',icon:'🔬',label:'Ciencia'},
-        personal:{color:'#f39c12',icon:'🌍',label:'Personal Social'},
-        historia:{color:'#9b59b6',icon:'⚔️',label:'Historia'},
-        ingles:{color:'#1abc9c',icon:'🌐',label:'Inglés'},
-        arte:{color:'#e91e63',icon:'🎨',label:'Arte'},
-        educacion_fisica:{color:'#ff9800',icon:'⚽',label:'Ed. Física'}};
+  // Calcular progreso por curso desde db.temas
+  var porCurso = {};
+  var totalComp = 0;
+  db.temas.forEach(function(t){
+    var c = (t.curso||'').toLowerCase();
+    if(!porCurso[c]) porCurso[c] = {completados:0, total:0};
+    porCurso[c].total++;
+  });
 
-      progData.forEach(function(r){
-        var c = (r.curso||'').toLowerCase();
-        if(!porCurso[c]) porCurso[c] = {completados:0, total:0};
-        porCurso[c].total++;
-        if(parseInt(r.pct||0)>=50) porCurso[c].completados++;
-      });
+  // Barras SVG
+  var bars = '';
+  var barW=36; var gap=14; var maxH=100;
+  var cursoKeys = Object.keys(CC).filter(function(k){ return porCurso[k]&&porCurso[k].total>0; });
+  var svgW = cursoKeys.length*(barW+gap)+gap;
 
-      // Total de temas por curso en db
-      db.temas.forEach(function(t){
-        var c = (t.curso||'').toLowerCase();
-        if(!porCurso[c]) porCurso[c] = {completados:0, total:0};
-        // Solo contar si no viene del Drive
-        if(progData.length === 0) porCurso[c].total++;
-      });
+  cursoKeys.forEach(function(c,i){
+    var d = porCurso[c]||{completados:0,total:1};
+    var pct = d.total>0?d.completados/d.total:0;
+    var h   = Math.max(4,Math.round(pct*maxH));
+    var x   = gap+i*(barW+gap);
+    var y   = maxH-h+20;
+    var cc  = CC[c]||{color:'#6c5ce7',icon:'📚'};
+    bars += '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" rx="5" fill="'+cc.color+'" opacity="0.85"/>'+
+      '<text x="'+(x+barW/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="9" fill="#636e72" font-weight="700">'+Math.round(pct*100)+'%</text>'+
+      '<text x="'+(x+barW/2)+'" y="'+(maxH+30)+'" text-anchor="middle" font-size="12">'+cc.icon+'</text>';
+  });
 
-      // Generar gráfico SVG de barras
-      var bars = '';
-      var barW = 40; var gap = 18; var maxH = 120;
-      var cursoKeys = Object.keys(CC).filter(function(k){ return porCurso[k] && porCurso[k].total > 0; });
-      var svgW = cursoKeys.length * (barW + gap) + gap;
+  var totalTemas = db.temas.filter(function(t){
+    return !alumno.nivel||(t.nivel||'').toLowerCase()===alumno.nivel;
+  }).length || db.temas.length;
+  var pctG = totalTemas>0?Math.round(totalComp/totalTemas*100):0;
 
-      cursoKeys.forEach(function(c, i){
-        var d = porCurso[c] || {completados:0, total:1};
-        var pct = d.total > 0 ? d.completados/d.total : 0;
-        var h   = Math.max(4, Math.round(pct * maxH));
-        var x   = gap + i * (barW + gap);
-        var y   = maxH - h + 20;
-        var cc  = CC[c] || {color:'#6c5ce7', icon:'📚', label:c};
-        bars += '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" rx="6" fill="'+cc.color+'" opacity="0.85"/>'+
-          '<text x="'+(x+barW/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="10" fill="#636e72" font-weight="700">'+Math.round(pct*100)+'%</text>'+
-          '<text x="'+(x+barW/2)+'" y="'+(maxH+35)+'" text-anchor="middle" font-size="14">'+cc.icon+'</text>'+
-          '<text x="'+(x+barW/2)+'" y="'+(maxH+50)+'" text-anchor="middle" font-size="8" fill="#888">'+cc.label.substring(0,6)+'</text>';
-      });
-
-      var totalComp = Object.values(porCurso).reduce(function(s,d){ return s+d.completados; }, 0);
-      var totalAll  = db.temas.filter(function(t){
-        return (alumno.nivel===''||t.nivel===alumno.nivel) && (alumno.grado===''||String(t.grado)===String(alumno.grado));
-      }).length || db.temas.length;
-      var pctGlobal = totalAll > 0 ? Math.round(totalComp/totalAll*100) : 0;
-
-      Swal.fire({
-        title: '📊 Progreso de '+alumno.nombre,
-        width: '520px',
-        html:
-          '<div style="text-align:left">'+
-          // Stats globales
-          '<div style="display:flex;gap:10px;margin-bottom:16px">'+
-            '<div style="flex:1;background:#f8f9fa;border-radius:10px;padding:12px;text-align:center">'+
-              '<div style="font-size:22px;font-weight:800;color:#6c5ce7">'+totalComp+'</div>'+
-              '<div style="font-size:10px;color:#888">Temas completados</div>'+
-            '</div>'+
-            '<div style="flex:1;background:#f8f9fa;border-radius:10px;padding:12px;text-align:center">'+
-              '<div style="font-size:22px;font-weight:800;color:#00b894">'+pctGlobal+'%</div>'+
-              '<div style="font-size:10px;color:#888">Avance general</div>'+
-            '</div>'+
-            '<div style="flex:1;background:#f8f9fa;border-radius:10px;padding:12px;text-align:center">'+
-              '<div style="font-size:22px;font-weight:800;color:#e67e22">'+alumno.nivel+' '+alumno.grado+'°</div>'+
-              '<div style="font-size:10px;color:#888">Nivel/Grado</div>'+
-            '</div>'+
-          '</div>'+
-          // Barra de progreso global
-          '<div style="background:#eee;border-radius:20px;height:10px;margin-bottom:16px;overflow:hidden">'+
-            '<div style="background:linear-gradient(135deg,#6c5ce7,#00b894);height:100%;border-radius:20px;width:'+pctGlobal+'%;transition:width .5s"></div>'+
-          '</div>'+
-          // Gráfico SVG
-          (cursoKeys.length > 0 ?
-            '<div style="font-size:11px;font-weight:800;color:#636e72;margin-bottom:8px">PROGRESO POR CURSO</div>'+
-            '<div style="overflow-x:auto"><svg width="'+svgW+'" height="'+(maxH+60)+'" viewBox="0 0 '+svgW+' '+(maxH+60)+'">'+
-              bars+
-            '</svg></div>' : '<p style="color:#888;font-size:12px">Sin datos de progreso por curso aún.</p>')+
-          '</div>',
-        confirmButtonColor: '#6c5ce7',
-        confirmButtonText: 'Cerrar'
-      });
-    })
-    .catch(function(){
-      // Mostrar sin datos de Drive
-      Swal.fire({
-        icon:'info', title:'Progreso de '+alumno.nombre,
-        text:'No se pudo cargar el progreso desde Drive. El alumno debe sincronizar su avance.',
-        confirmButtonColor:'#6c5ce7'
-      });
-    });
+  Swal.fire({
+    title:'📊 '+alumno.nombre,
+    width:'500px',
+    html:'<div style="text-align:left">'+
+      '<div style="display:flex;gap:10px;margin-bottom:14px">'+
+        '<div style="flex:1;background:#f8f9fa;border-radius:10px;padding:12px;text-align:center">'+
+          '<div style="font-size:20px;font-weight:800;color:#6c5ce7">'+alumno.codigo+'</div>'+
+          '<div style="font-size:10px;color:#888">Código</div></div>'+
+        '<div style="flex:1;background:#f8f9fa;border-radius:10px;padding:12px;text-align:center">'+
+          '<div style="font-size:20px;font-weight:800;color:#00b894">'+pctG+'%</div>'+
+          '<div style="font-size:10px;color:#888">Avance</div></div>'+
+        '<div style="flex:1;background:#f8f9fa;border-radius:10px;padding:12px;text-align:center">'+
+          '<div style="font-size:18px;font-weight:800;color:#e67e22;text-transform:capitalize">'+alumno.nivel+' '+alumno.grado+'°</div>'+
+          '<div style="font-size:10px;color:#888">Nivel</div></div>'+
+      '</div>'+
+      '<div style="background:#eee;border-radius:20px;height:8px;margin-bottom:14px;overflow:hidden">'+
+        '<div style="background:linear-gradient(135deg,#6c5ce7,#00b894);height:100%;border-radius:20px;width:'+pctG+'%"></div>'+
+      '</div>'+
+      (cursoKeys.length>0?
+        '<div style="font-size:10px;font-weight:800;color:#636e72;margin-bottom:6px">PROGRESO POR CURSO</div>'+
+        '<div style="overflow-x:auto"><svg width="'+svgW+'" height="'+(maxH+40)+'" viewBox="0 0 '+svgW+' '+(maxH+40)+'">'+bars+'</svg></div>'
+        :'<p style="color:#888;font-size:12px;text-align:center">Sincroniza el progreso del alumno desde Drive.</p>')+
+    '</div>',
+    confirmButtonColor:'#6c5ce7', confirmButtonText:'Cerrar'
+  });
 }
 
 document.addEventListener('DOMContentLoaded',function(){
@@ -4267,8 +4226,7 @@ function _guardarCursoCustom(id,nombre,icono,img){var saved=JSON.parse(localStor
 var LOGROS_DEF=[{id:'primer_tema',icon:'🌟',nombre:'Primera estrella',desc:'Completaste tu primer tema'},{id:'5_temas',icon:'📚',nombre:'Lector ávido',desc:'Completaste 5 temas'},{id:'10_temas',icon:'🎓',nombre:'Estudioso',desc:'Completaste 10 temas'},{id:'perfecto',icon:'💯',nombre:'Perfección',desc:'100% en un mini-reto'},{id:'quiz_10',icon:'⚡',nombre:'Rayo veloz',desc:'Terminaste un Quiz Express'},{id:'3_cursos',icon:'🌈',nombre:'Explorador',desc:'Temas en 3 cursos distintos'},{id:'racha_3',icon:'🔥',nombre:'En racha',desc:'3 días seguidos estudiando'},{id:'todos_grado',icon:'🏆',nombre:'Maestro del grado',desc:'Todos los temas de un grado'}];
 
 function iniciarPerfil(){if(alumnoNombre){document.getElementById('nombreModal').classList.remove('open');mostrarPerfilBar();}}
-function guardarNombre(){var inp=document.getElementById('inputNombre').value.trim();alumnoNombre=inp||'Explorador';localStorage.setItem('af_nombre',alumnoNombre);
-  setTimeout(function(){try{syncProgresoAlDrive();}catch(e){}},1000);document.getElementById('nombreModal').classList.remove('open');if(!localStorage.getItem('af_inicio'))localStorage.setItem('af_inicio',new Date().toDateString());mostrarPerfilBar();showToast('¡Hola, '+alumnoNombre+'! 🎉 ¡A aprender!');}
+// guardarNombre() → ver versión actualizada arriba
 function mostrarPerfilBar(){var bar=document.getElementById('perfilBar');bar.style.display='flex';document.getElementById('perfilAvatar').textContent=alumnoNombre.charAt(0).toUpperCase()||'😊';document.getElementById('perfilNombre').textContent=alumnoNombre;}
 function abrirPerfil(){var completados=db.temas.filter(function(t){try{return parseInt(localStorage.getItem('af_p_'+t.id)||0)>=50;}catch(e){return false;}});var pcts=db.temas.map(function(t){try{return parseInt(localStorage.getItem('af_p_'+t.id)||0);}catch(e){return 0;}});var promedio=pcts.length?Math.round(pcts.reduce(function(a,b){return a+b;},0)/pcts.length):0;var logrosDesbloqueados=calcularLogros();document.getElementById('pmAvatar').textContent=alumnoNombre.charAt(0).toUpperCase()||'😊';document.getElementById('pmNombre').textContent=alumnoNombre;document.getElementById('pmNivel').textContent=currentNivel.charAt(0).toUpperCase()+currentNivel.slice(1)+' · '+currentGrado+'° Grado';document.getElementById('pmTemas').textContent=completados.length;document.getElementById('pmPct').textContent=promedio+'%';document.getElementById('pmLogros').textContent=logrosDesbloqueados.length;var grid=document.getElementById('logrosGrid');grid.innerHTML=LOGROS_DEF.map(function(l){var ok=logrosDesbloqueados.includes(l.id);return'<div class="logro-card '+(ok?'desbloqueado':'bloqueado')+'"><div class="logro-icon">'+l.icon+'</div><div class="logro-nombre">'+l.nombre+'</div><div class="logro-desc">'+l.desc+'</div></div>';}).join('');document.getElementById('perfilModal').classList.add('open');}
 function cerrarPerfil(){document.getElementById('perfilModal').classList.remove('open');}
