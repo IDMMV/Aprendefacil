@@ -2199,31 +2199,43 @@ async function _iaLlamarAPI(tema){
 
 // Aplicar el resultado al tema en db.temas
 function _iaAplicarResultado(tema, resultado){
-  // Actualizar el tema en db.temas con todos los campos nuevos
   var idx = db.temas.findIndex(function(t){ return t.id === tema.id; });
   if(idx < 0) return;
 
-  // Si el contenido es string, parsearlo
+  // Parsear contenido existente
   var c = db.temas[idx].contenido;
   if(typeof c === 'string'){ try{ c = JSON.parse(c); }catch(e){ c = {}; } }
   c = c || {};
 
-  // Actualizar campos del contenido
-  if(resultado.concepto)          c.concepto          = resultado.concepto;
-  if(resultado.ejemplo1)          c.ejemplo1          = resultado.ejemplo1;
-  if(resultado.ejemplo2)          c.ejemplo2          = resultado.ejemplo2;
-  if(resultado.historia)          c.historia          = resultado.historia;
-  if(resultado.palabrasClave)     c.palabrasClave     = resultado.palabrasClave;
-  if(resultado.conexionPeru)      c.conexionPeru      = resultado.conexionPeru;
-  if(resultado.miniActividad)     c.miniActividad     = resultado.miniActividad;
-  if(resultado.preguntaReflexion) c.preguntaReflexion = resultado.preguntaReflexion;
+  // ── 14 campos del enriquecedor ────────────────────────
+  if(resultado.concepto)              c.concepto              = resultado.concepto;
+  if(resultado.resumen)               c.resumen               = resultado.resumen;
+  if(resultado.historia)              c.historia              = resultado.historia;
+  if(resultado.ejemplo1)              c.ejemplo1              = resultado.ejemplo1;
+  if(resultado.ejemplo2)              c.ejemplo2              = resultado.ejemplo2;
+  if(resultado.palabrasClave)         c.palabrasClave         = resultado.palabrasClave;
+  if(resultado.conexionPeru)          c.conexionPeru          = resultado.conexionPeru;
+  if(resultado.miniActividad)         c.miniActividad         = resultado.miniActividad;
+  if(resultado.preguntaReflexion)     c.preguntaReflexion     = resultado.preguntaReflexion;
+  if(resultado.objetivos)             c.objetivos             = resultado.objetivos;
+  if(resultado.explicacionSimple)     c.explicacionSimple     = resultado.explicacionSimple;
+  if(resultado.conexionOtrasMaterias) c.conexionOtrasMaterias = resultado.conexionOtrasMaterias;
+  if(resultado.nivelDificultad)       c.nivelDificultad       = resultado.nivelDificultad;
+  if(resultado.preguntas && resultado.preguntas.length > 0){
+    // Combinar preguntas existentes con las nuevas (evitar duplicados)
+    var existentes = c.preguntas || [];
+    c.preguntas = existentes.concat(resultado.preguntas).slice(0, 10); // máx 10 por tema
+  }
 
-  // También actualizar el campo concepto del tema directamente
-  db.temas[idx].concepto  = resultado.concepto || tema.concepto;
-  db.temas[idx].contenido = JSON.stringify(c);
+  // Actualizar tema
+  db.temas[idx].concepto      = resultado.concepto || tema.concepto;
+  db.temas[idx].resumen       = resultado.resumen  || '';
+  db.temas[idx].contenido     = JSON.stringify(c);
 
-  // Guardar en localStorage
+  // Guardar localmente
   localStorage.setItem('af_db', JSON.stringify(db));
+  // Subir en background
+  setTimeout(function(){ try{ _iaSyncDrive().catch(function(){}); }catch(e){} }, 500);
 }
 
 // Iniciar enriquecimiento masivo
@@ -2277,11 +2289,12 @@ async function iniciarEnriquecimiento(){
     _iaActualizarProgreso(_iaTemasQueue.length);
     _iaActualizarStats();
 
-    // Guardar en localStorage cada 10 temas
+    // Guardar localmente cada 10 temas Y subir a Drive
     if(_iaIdx % 10 === 0){
       localStorage.setItem('af_db', JSON.stringify(db));
       updateSyncBar();
-      _iaLog('💾 Guardado automático ('+_iaIdx+'/'+_iaTemasQueue.length+')', 'warn');
+      _iaLog('💾 Guardando en Drive... ('+_iaIdx+'/'+_iaTemasQueue.length+')', 'warn');
+      try{ await _iaSyncDrive(); }catch(e){ _iaLog('⚠️ Error sync Drive: '+e.message,'err'); }
     }
 
     // Pausa entre llamadas
@@ -2296,7 +2309,13 @@ async function iniciarEnriquecimiento(){
   localStorage.setItem('af_db', JSON.stringify(db));
   updateSyncBar();
   _iaLog('\n🎉 Completado: '+_iaOk+' exitosos, '+_iaErr+' errores', 'ok');
-  _iaLog('Presiona ☁️ Subir a Drive para sincronizar todo.', 'ok');
+  _iaLog('⬆️ Subiendo todo a Drive...', 'info');
+  try{
+    await _iaSyncDrive();
+    _iaLog('✅ ¡Todo guardado en Drive correctamente!', 'ok');
+  }catch(e){
+    _iaLog('⚠️ Error al subir a Drive: '+e.message+' — usa el botón manual ☁️', 'err');
+  }
   renderDashboard();
 }
 
@@ -2357,15 +2376,29 @@ function _iaMostrarPreview(tema, res){
   var cont    = document.getElementById('iaPreviewContenido');
   if(!preview) return;
   preview.style.display = 'block';
-  if(titulo) titulo.textContent = tema.id + ' — ' + tema.titulo + ' ('+tema.nivel+' '+tema.grado+'° · '+tema.curso+')';
+  if(titulo) titulo.textContent = tema.id+' — '+tema.titulo+' ('+tema.nivel+' '+tema.grado+'° · '+tema.curso+')';
   var html = '';
-  if(res.concepto)          html += '<div style="margin-bottom:8px"><strong style="color:#6c5ce7">🎯 Concepto:</strong><br>'+res.concepto+'</div>';
-  if(res.historia)          html += '<div style="margin-bottom:8px"><strong style="color:#f39c12">📖 Historia:</strong><br><em>'+res.historia+'</em></div>';
-  if(res.ejemplo1)          html += '<div style="margin-bottom:6px"><strong style="color:#27ae60">📌 Ejemplo 1:</strong> '+res.ejemplo1+'</div>';
-  if(res.ejemplo2)          html += '<div style="margin-bottom:8px"><strong style="color:#3498db">📌 Ejemplo 2:</strong> '+res.ejemplo2+'</div>';
-  if(res.conexionPeru)      html += '<div style="margin-bottom:6px"><strong style="color:#e74c3c">🌎 Perú:</strong> '+res.conexionPeru+'</div>';
-  if(res.miniActividad)     html += '<div style="margin-bottom:6px"><strong style="color:#6c5ce7">🎯 Actividad:</strong> '+res.miniActividad+'</div>';
-  if(res.preguntaReflexion) html += '<div><strong style="color:#00b894">💡 Reflexión:</strong> '+res.preguntaReflexion+'</div>';
+  if(res.resumen)           html += '<div style="background:#6c5ce720;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:13px;font-weight:700;color:#6c5ce7">💬 '+res.resumen+'</div>';
+  if(res.nivelDificultad)   html += '<div style="margin-bottom:6px"><strong>📊 Dificultad:</strong> <span style="text-transform:capitalize">'+res.nivelDificultad+'</span></div>';
+  if(res.concepto)          html += '<div style="margin-bottom:8px"><strong style="color:#6c5ce7">🎯 Concepto:</strong><br><small>'+res.concepto+'</small></div>';
+  if(res.historia)          html += '<div style="margin-bottom:8px"><strong style="color:#f39c12">📖 Historia:</strong><br><em><small>'+res.historia+'</small></em></div>';
+  if(res.ejemplo1)          html += '<div style="margin-bottom:4px"><strong style="color:#27ae60">📌 Ejemplo 1:</strong> <small>'+res.ejemplo1+'</small></div>';
+  if(res.ejemplo2)          html += '<div style="margin-bottom:8px"><strong style="color:#3498db">📌 Ejemplo 2:</strong> <small>'+res.ejemplo2+'</small></div>';
+  if(res.conexionPeru)      html += '<div style="margin-bottom:4px"><strong style="color:#e74c3c">🌎 Perú:</strong> <small>'+res.conexionPeru+'</small></div>';
+  if(res.miniActividad)     html += '<div style="margin-bottom:4px"><strong style="color:#6c5ce7">🎯 Actividad:</strong> <small>'+res.miniActividad+'</small></div>';
+  if(res.preguntaReflexion) html += '<div style="margin-bottom:4px"><strong style="color:#00b894">💡 Reflexión:</strong> <small>'+res.preguntaReflexion+'</small></div>';
+  if(res.explicacionSimple) html += '<div style="margin-bottom:4px"><strong style="color:#e67e22">🗣️ Simple:</strong> <small>'+res.explicacionSimple+'</small></div>';
+  if(res.objetivos && res.objetivos.length){
+    html += '<div style="margin-bottom:4px"><strong>🎓 Objetivos:</strong><ul style="margin:4px 0;padding-left:16px;font-size:11px">';
+    res.objetivos.forEach(function(o){ html += '<li>'+o+'</li>'; });
+    html += '</ul></div>';
+  }
+  if(res.preguntas && res.preguntas.length){
+    html += '<div style="margin-bottom:4px"><strong style="color:#9b59b6">❓ '+res.preguntas.length+' preguntas generadas</strong></div>';
+  }
+  if(res.palabrasClave && res.palabrasClave.length){
+    html += '<div><strong>🔑 Palabras clave:</strong> <small>'+res.palabrasClave.map(function(p){ return p.termino; }).join(', ')+'</small></div>';
+  }
   if(cont) cont.innerHTML = html || '(sin contenido)';
 }
 
@@ -4786,6 +4819,56 @@ function hideAdminLogin(){
   if(mainModal) mainModal.classList.remove('open');
 }
 
+// ── Sincronizar temas enriquecidos con Drive ─────────────
+function _iaSyncDrive(){
+  return new Promise(function(resolve, reject){
+    var cbName = 'cb_ia_sync_' + Date.now();
+    var temasData = db.temas.map(function(t){
+      return {
+        id:        t.id,
+        nivel:     t.nivel,
+        grado:     t.grado,
+        curso:     t.curso,
+        titulo:    t.titulo,
+        subtitulo: t.subtitulo||'',
+        contenido: typeof t.contenido === 'string' ? t.contenido : JSON.stringify(t.contenido||{})
+      };
+    });
+
+    // Usar drivePostViaGet para enviar los datos
+    var payload = JSON.stringify({ action:'syncAll', data:{ temas: temasData } });
+    var url = APPS_SCRIPT_URL + '?mode=post&payload=' +
+              encodeURIComponent(payload) + '&callback=' + cbName + '&t=' + Date.now();
+
+    var timer = setTimeout(function(){
+      delete window[cbName];
+      var s = document.getElementById('s_'+cbName);
+      if(s) s.remove();
+      reject(new Error('Timeout al subir a Drive'));
+    }, 30000);
+
+    window[cbName] = function(data){
+      clearTimeout(timer);
+      delete window[cbName];
+      var s = document.getElementById('s_'+cbName);
+      if(s) s.remove();
+      if(data && data.ok) resolve(data);
+      else reject(new Error((data&&data.error)||'Error desconocido'));
+    };
+
+    var s = document.createElement('script');
+    s.id  = 's_' + cbName;
+    s.src = url;
+    s.onerror = function(){
+      clearTimeout(timer);
+      delete window[cbName];
+      s.remove();
+      reject(new Error('Error de red'));
+    };
+    document.head.appendChild(s);
+  });
+}
+
 document.addEventListener('DOMContentLoaded',function(){
   normalizarDB();    // Normalizar datos existentes
   aplicarConfig();   // Aplicar configuración guardada
@@ -5143,6 +5226,42 @@ function verLeccion(id){
   }
   document.getElementById('lesConcepto').textContent = parteConcepto;
 
+  // ── BLOQUE 1b: Resumen + Dificultad ─────────────────────
+  var resumenBox = document.getElementById('lesResumenBox');
+  var resumenEl  = document.getElementById('lesResumen');
+  var dificEl    = document.getElementById('lesDificultad');
+  var resumen    = c.resumen || '';
+  var dificultad = c.nivelDificultad || '';
+  if(resumenBox){
+    if(resumen || dificultad){
+      resumenBox.style.display = 'block';
+      if(resumenEl && resumen) resumenEl.textContent = '"' + resumen + '"';
+      if(dificEl && dificultad){
+        var dColors = {basico:'#00b894', intermedio:'#f39c12', avanzado:'#e74c3c'};
+        dificEl.textContent = dificultad.charAt(0).toUpperCase()+dificultad.slice(1);
+        dificEl.style.background = (dColors[dificultad]||'#6c5ce7')+'20';
+        dificEl.style.color = dColors[dificultad]||'#6c5ce7';
+        dificEl.style.border = '1.5px solid '+(dColors[dificultad]||'#6c5ce7')+'40';
+      }
+    } else { resumenBox.style.display = 'none'; }
+  }
+
+  // ── BLOQUE 1c: Objetivos ─────────────────────────────────
+  var objBox = document.getElementById('lesObjetivosBox');
+  var objEl  = document.getElementById('lesObjetivos');
+  var objetivos = c.objetivos || [];
+  if(objBox && objEl){
+    if(objetivos.length > 0){
+      objBox.style.display = 'block';
+      objEl.innerHTML = objetivos.map(function(o){
+        return '<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:'+cc.g1+'15;border-radius:8px;font-size:13px">'+
+          '<span style="color:'+cc.g1+';font-weight:800;flex-shrink:0">✓</span>'+
+          '<span>'+o+'</span>'+
+        '</div>';
+      }).join('');
+    } else { objBox.style.display = 'none'; }
+  }
+
   // ── BLOQUE 2: Palabras Clave ─────────────────────────────
   var palabrasBox = document.getElementById('lesPalabrasBox');
   var palabrasEl  = document.getElementById('lesPalabras');
@@ -5234,6 +5353,33 @@ function verLeccion(id){
     } else {
       refBox.style.display = 'none';
     }
+  }
+
+  // ── BLOQUE 7b: Explicación Simple ───────────────────────
+  var expSimpleBox = document.getElementById('lesExplicaSimpleBox');
+  var expSimpleEl  = document.getElementById('lesExplicaSimple');
+  var expSimple    = c.explicacionSimple || '';
+  if(expSimpleBox && expSimpleEl){
+    if(expSimple){ expSimpleBox.style.display='block'; expSimpleEl.textContent='"'+expSimple+'"'; }
+    else { expSimpleBox.style.display='none'; }
+  }
+
+  // ── BLOQUE 7c: Conexión con otras materias ───────────────
+  var conMatBox = document.getElementById('lesConexionMatBox');
+  var conMatEl  = document.getElementById('lesConexionMat');
+  var conMat    = c.conexionOtrasMaterias || [];
+  if(conMatBox && conMatEl){
+    if(conMat.length > 0){
+      conMatBox.style.display = 'block';
+      conMatEl.innerHTML = conMat.map(function(cm){
+        var m = typeof cm === 'object' ? cm : {materia:cm, conexion:''};
+        return '<div style="background:var(--card);border-radius:10px;padding:10px 12px;display:flex;align-items:flex-start;gap:10px">'+
+          '<div style="background:'+cc.g1+';color:#fff;border-radius:8px;padding:4px 8px;font-size:11px;font-weight:800;flex-shrink:0;text-transform:capitalize">'+
+            (m.materia||'')+'</div>'+
+          '<div style="font-size:12px;color:var(--text)">'+( m.conexion||'')+'</div>'+
+        '</div>';
+      }).join('');
+    } else { conMatBox.style.display='none'; }
   }
 
   // ── BLOQUE 8: Video ──────────────────────────────────────
@@ -7186,6 +7332,20 @@ async function guardarTodoA_Drive_silencioso(){
   <div class="lesson-svg-wrap" id="lesSvgWrap"></div>
 </div>
 
+<!-- BLOQUE 1b: RESUMEN + NIVEL DIFICULTAD -->
+<div class="lesson-block lesson-full" id="lesResumenBox" style="display:none">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <div id="lesResumen" style="font-size:15px;font-weight:700;color:#6c5ce7;font-style:italic"></div>
+    <div id="lesDificultad" style="font-size:11px;padding:4px 12px;border-radius:20px;font-weight:700"></div>
+  </div>
+</div>
+
+<!-- BLOQUE 1c: OBJETIVOS DE APRENDIZAJE -->
+<div class="lesson-block lesson-full" id="lesObjetivosBox" style="display:none">
+  <h3 style="margin:0 0 10px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">🎓</span> ¿Qué aprenderás?</h3>
+  <div id="lesObjetivos" style="display:flex;flex-direction:column;gap:6px"></div>
+</div>
+
 <!-- BLOQUE 2: PALABRAS CLAVE -->
 <div class="lesson-block lesson-full" id="lesPalabrasBox" style="display:none">
   <h3 style="margin:0 0 12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">🔑</span> Palabras Clave</h3>
@@ -7232,6 +7392,18 @@ async function guardarTodoA_Drive_silencioso(){
 <div class="lesson-block lesson-full" id="lesReflexionBox" style="display:none">
   <h3 style="margin:0 0 12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">💡</span> Para Pensar</h3>
   <div id="lesReflexion" style="background:linear-gradient(135deg,#00b894,#00cec9);border-radius:12px;padding:16px;color:#fff;font-size:14px;line-height:1.7;font-weight:600;text-align:center"></div>
+</div>
+
+<!-- BLOQUE 7b: EXPLICACIÓN SIMPLE -->
+<div class="lesson-block lesson-full" id="lesExplicaSimpleBox" style="display:none">
+  <h3 style="margin:0 0 12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">🗣️</span> Como se lo explicarías a un amigo</h3>
+  <div id="lesExplicaSimple" style="background:linear-gradient(135deg,#ffeaa7,#fdcb6e20);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.7;color:var(--text);border-left:4px solid #f39c12"></div>
+</div>
+
+<!-- BLOQUE 7c: CONEXIÓN CON OTRAS MATERIAS -->
+<div class="lesson-block lesson-full" id="lesConexionMatBox" style="display:none">
+  <h3 style="margin:0 0 12px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">🔗</span> Conexión con otras materias</h3>
+  <div id="lesConexionMat" style="display:flex;flex-direction:column;gap:8px"></div>
 </div>
 
 <!-- BLOQUE 8: VIDEO -->
