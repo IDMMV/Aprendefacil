@@ -2941,7 +2941,7 @@ function verExamen(){
   showView('examen');
 
   // Verificar si tiene examen habilitado
-  var habilitado = verificarHabilitacionExamen() || isAdmin;
+  var habilitado = !window._modoInvitado && (verificarHabilitacionExamen() || isAdmin);
 
   if(habilitado){
     if(lock) lock.style.display='none';
@@ -3238,6 +3238,7 @@ function checkUsuarioDisponibleUI(val){
 
 // ── LOGIN ─────────────────────────────────────────────────
 async function doLogin(){
+  isAdmin = false; try{ localStorage.removeItem('af_admin'); }catch(e){}
   var usuario = ((document.getElementById('loginUsuario')||{}).value||'').trim().toLowerCase();
   var pass    = (document.getElementById('loginPass')||{}).value||'';
   var errEl   = document.getElementById('loginError');
@@ -3451,6 +3452,9 @@ async function enviarSolicitudAdmin(){
 // ── ENTRAR SIN CUENTA ────────────────────────────────────
 function entrarSinCuenta(){ entrarComoInvitado(); }
 function entrarComoInvitado(){
+  // Forzar logout de admin si estaba activo
+  isAdmin = false;
+  try{ localStorage.removeItem('af_admin'); }catch(e){}
   alumnoNombre  = 'Invitado';
   alumnoActual  = null;
   window._modoInvitado = true;
@@ -3825,15 +3829,16 @@ function _updateBottomNav(){
   var headerAdminBtn = document.getElementById('btnAdminLogin');
   var headerBadge    = document.getElementById('adminBadge');
 
-  if(isAdmin){
-    // Admin: muestra Panel, oculta botón Admin, muestra Salir
+  // Si es invitado o alumno normal → ocultar TODO lo de admin
+  var esAdmin = isAdmin && !window._modoInvitado;
+
+  if(esAdmin){
     if(btnAdmin)  btnAdmin.style.display  = 'none';
     if(btnPanel)  btnPanel.style.display  = 'flex';
     if(btnCerrar) btnCerrar.style.display = 'flex';
     if(headerAdminBtn) headerAdminBtn.style.display = 'none';
     if(headerBadge)    headerBadge.style.display    = 'flex';
   } else {
-    // Alumno/Invitado: oculta todo lo relacionado con admin
     if(btnAdmin)  btnAdmin.style.display  = 'none';
     if(btnPanel)  btnPanel.style.display  = 'none';
     if(btnCerrar) btnCerrar.style.display = 'flex';
@@ -3932,31 +3937,39 @@ function actualizarBarraUsuario(){
   var badge  = document.getElementById('userTopBadge');
   if(!bar) return;
 
+  // Modo invitado tiene prioridad absoluta
+  if(window._modoInvitado){
+    bar.style.display      = 'flex';
+    icon.textContent       = '👀';
+    name.textContent       = 'Modo Invitado';
+    badge.textContent      = 'INVITADO';
+    badge.style.background = 'rgba(243,156,18,.7)';
+    badge.style.color      = '#fff';
+    // Ocultar panel/admin en bottom nav
+    _updateBottomNav();
+    return;
+  }
+
   if(isAdmin){
-    bar.style.display   = 'flex';
-    icon.textContent    = '🔐';
-    name.textContent    = 'Administrador';
-    badge.textContent   = 'ADMIN';
-    badge.style.background = 'rgba(225,112,85,.7)';
+    bar.style.display      = 'flex';
+    icon.textContent       = '🔐';
+    name.textContent       = 'Administrador';
+    badge.textContent      = 'ADMIN';
+    badge.style.background = 'rgba(225,112,85,.8)';
     badge.style.color      = '#fff';
-  } else if(window._modoInvitado){
-    bar.style.display   = 'flex';
-    icon.textContent    = '👀';
-    name.textContent    = 'Modo Invitado';
-    badge.textContent   = 'INVITADO';
-    badge.style.background = 'rgba(243,156,18,.6)';
-    badge.style.color      = '#fff';
-  } else if(alumnoNombre && alumnoNombre !== 'Explorador'){
-    bar.style.display   = 'flex';
-    icon.textContent    = '🎒';
-    name.textContent    = alumnoNombre;
-    badge.textContent   = 'ESTUDIANTE';
-    badge.style.background = 'rgba(0,184,148,.6)';
+  } else if(alumnoNombre && alumnoNombre !== 'Explorador' && alumnoNombre !== ''){
+    bar.style.display      = 'flex';
+    icon.textContent       = '🎒';
+    name.textContent       = alumnoNombre;
+    badge.textContent      = 'ESTUDIANTE';
+    badge.style.background = 'rgba(0,184,148,.7)';
     badge.style.color      = '#fff';
   } else {
     bar.style.display = 'none';
   }
+  _updateBottomNav();
 }
+
 
 document.addEventListener('DOMContentLoaded',function(){
   normalizarDB();    // Normalizar datos existentes
