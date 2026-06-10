@@ -2180,50 +2180,39 @@ function _iaActualizarStats(){
 
 // Llamada a la API de Claude para enriquecer un tema
 async function _iaLlamarAPI(tema){
-  // Pasar datos del tema como parámetros GET para compatibilidad con JSONP
-  var cbName = 'cb_ia_' + Date.now();
-  var params = new URLSearchParams({
+  // Usar POST para manejar títulos con tildes y caracteres especiales
+  var payload = {
     action:   'enriquecer',
-    nivel:    tema.nivel     || '',
-    grado:    String(tema.grado || ''),
-    curso:    tema.curso     || '',
-    titulo:   (tema.titulo   || '').substring(0, 100),
-    concepto: (tema.concepto || '').substring(0, 200),
-    callback: cbName,
-    t:        Date.now()
-  });
+    data: {
+      nivel:    tema.nivel     || '',
+      grado:    String(tema.grado || ''),
+      curso:    tema.curso     || '',
+      titulo:   (tema.titulo   || '').substring(0, 100),
+      concepto: ''
+    }
+  };
 
-  return new Promise(function(resolve, reject){
-    var timer = setTimeout(function(){
-      delete window[cbName];
-      var s = document.getElementById('jsonp_ia_'+cbName);
-      if(s) s.remove();
-      reject(new Error('Timeout — verifica que el Apps Script esté actualizado a v5'));
-    }, 25000);
+  // Extraer concepto del contenido si está disponible
+  try{
+    var c = tema.contenido;
+    if(typeof c === 'string') c = JSON.parse(c);
+    if(c && c.concepto) payload.data.concepto = c.concepto.substring(0,200);
+    else if(tema.concepto) payload.data.concepto = tema.concepto.substring(0,200);
+  }catch(e){
+    if(tema.concepto) payload.data.concepto = tema.concepto.substring(0,200);
+  }
 
-    window[cbName] = function(data){
-      clearTimeout(timer);
-      delete window[cbName];
-      var s = document.getElementById('jsonp_ia_'+cbName);
-      if(s) s.remove();
-      if(data && data.ok && data.data){
-        resolve(data.data);
-      } else {
-        reject(new Error(data ? (data.error || 'Sin datos') : 'Respuesta vacía'));
-      }
-    };
-
-    var s = document.createElement('script');
-    s.id = 'jsonp_ia_' + cbName;
-    s.src = APPS_SCRIPT_URL + '?' + params.toString();
-    s.onerror = function(){
-      clearTimeout(timer);
-      delete window[cbName];
-      s.remove();
-      reject(new Error('Error de red — verifica tu conexión a internet'));
-    };
-    document.head.appendChild(s);
-  });
+  return drivePostViaGet(APPS_SCRIPT_URL, payload)
+    .then(function(data){
+      if(!data) throw new Error('Respuesta vacía del servidor');
+      // Manejar diferentes estructuras de respuesta
+      var result = data;
+      if(data.data && data.data.concepto) result = data.data; // { ok:true, data:{concepto:...} }
+      else if(data.concepto) result = data;                    // { ok:true, concepto:... }
+      else if(!data.ok && data.error) throw new Error(data.error);
+      if(!result.concepto && !result.ok) throw new Error('Sin campos en la respuesta');
+      return result;
+    });
 }
 
 // Aplicar el resultado al tema en db.temas
