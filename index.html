@@ -2180,39 +2180,60 @@ function _iaActualizarStats(){
 
 // Llamada a la API de Claude para enriquecer un tema
 async function _iaLlamarAPI(tema){
-  // Usar POST para manejar títulos con tildes y caracteres especiales
-  var payload = {
-    action:   'enriquecer',
-    data: {
-      nivel:    tema.nivel     || '',
-      grado:    String(tema.grado || ''),
-      curso:    tema.curso     || '',
-      titulo:   (tema.titulo   || '').substring(0, 100),
-      concepto: ''
-    }
-  };
-
-  // Extraer concepto del contenido si está disponible
+  // Extraer concepto
+  var concepto = '';
   try{
     var c = tema.contenido;
     if(typeof c === 'string') c = JSON.parse(c);
-    if(c && c.concepto) payload.data.concepto = c.concepto.substring(0,200);
-    else if(tema.concepto) payload.data.concepto = tema.concepto.substring(0,200);
+    if(c && c.concepto) concepto = c.concepto;
+    else if(tema.concepto) concepto = tema.concepto;
   }catch(e){
-    if(tema.concepto) payload.data.concepto = tema.concepto.substring(0,200);
+    concepto = tema.concepto || '';
   }
 
-  return drivePostViaGet(APPS_SCRIPT_URL, payload)
-    .then(function(data){
-      if(!data) throw new Error('Respuesta vacía del servidor');
-      // Manejar diferentes estructuras de respuesta
-      var result = data;
-      if(data.data && data.data.concepto) result = data.data; // { ok:true, data:{concepto:...} }
-      else if(data.concepto) result = data;                    // { ok:true, concepto:... }
-      else if(!data.ok && data.error) throw new Error(data.error);
-      if(!result.concepto && !result.ok) throw new Error('Sin campos en la respuesta');
-      return result;
-    });
+  var cbName = 'cb_ia_' + Date.now();
+
+  // Construir URL con parámetros directos (GET simple)
+  var url = APPS_SCRIPT_URL +
+    '?action=enriquecer' +
+    '&nivel='    + encodeURIComponent(tema.nivel    || '') +
+    '&grado='    + encodeURIComponent(String(tema.grado || '')) +
+    '&curso='    + encodeURIComponent(tema.curso    || '') +
+    '&titulo='   + encodeURIComponent((tema.titulo  || '').substring(0,80)) +
+    '&concepto=' + encodeURIComponent(concepto.substring(0,150)) +
+    '&callback=' + cbName +
+    '&t='        + Date.now();
+
+  return new Promise(function(resolve, reject){
+    var timer = setTimeout(function(){
+      delete window[cbName];
+      var s = document.getElementById('s_ia_'+cbName);
+      if(s) s.remove();
+      reject(new Error('Timeout — verifica que el Apps Script esté implementado'));
+    }, 30000);
+
+    window[cbName] = function(data){
+      clearTimeout(timer);
+      delete window[cbName];
+      var s = document.getElementById('s_ia_'+cbName);
+      if(s) s.remove();
+      if(!data){ reject(new Error('Respuesta vacía')); return; }
+      if(data.error){ reject(new Error(data.error)); return; }
+      if(data.ok === false){ reject(new Error(data.error||data.msg||'Error')); return; }
+      resolve(data);
+    };
+
+    var s = document.createElement('script');
+    s.id  = 's_ia_' + cbName;
+    s.src = url;
+    s.onerror = function(){
+      clearTimeout(timer);
+      delete window[cbName];
+      s.remove();
+      reject(new Error('Error de red'));
+    };
+    document.head.appendChild(s);
+  });
 }
 
 // Aplicar el resultado al tema en db.temas
@@ -2250,10 +2271,8 @@ function _iaAplicarResultado(tema, resultado){
   db.temas[idx].resumen       = resultado.resumen  || '';
   db.temas[idx].contenido     = JSON.stringify(c);
 
-  // Guardar localmente
+  // Solo guardar localmente (el loop principal sube a Drive cada 50 temas)
   localStorage.setItem('af_db', JSON.stringify(db));
-  // Subir en background
-  setTimeout(function(){ try{ _iaSyncDrive().catch(function(){}); }catch(e){} }, 500);
 }
 
 // Iniciar enriquecimiento masivo
@@ -2307,16 +2326,23 @@ async function iniciarEnriquecimiento(){
     _iaActualizarProgreso(_iaTemasQueue.length);
     _iaActualizarStats();
 
-    // Guardar localmente cada 10 temas Y subir a Drive
-    if(_iaIdx % 10 === 0){
-      localStorage.setItem('af_db', JSON.stringify(db));
+    // Guardar localmente cada tema
+    localStorage.setItem('af_db', JSON.stringify(db));
+
+    // Subir a Drive cada 50 temas (no cada 10 para no colgar la web)
+    if(_iaIdx % 50 === 0){
       updateSyncBar();
-      _iaLog('💾 Guardando en Drive... ('+_iaIdx+'/'+_iaTemasQueue.length+')', 'warn');
-      try{ await _iaSyncDrive(); }catch(e){ _iaLog('⚠️ Error sync Drive: '+e.message,'err'); }
+      _iaLog('💾 Checkpoint '+_iaIdx+'/'+_iaTemasQueue.length+' — guardando en Drive...', 'warn');
+      try{
+        await _iaSyncDrive();
+        _iaLog('✅ Drive actualizado ('+_iaIdx+' temas)', 'ok');
+      }catch(e){
+        _iaLog('⚠️ Error Drive: '+e.message+' — continuando...','err');
+      }
     }
 
-    // Pausa entre llamadas
-    await new Promise(function(r){ setTimeout(r, 500); });
+    // Pausa entre llamadas — 800ms para no saturar la API de Claude
+    await new Promise(function(r){ setTimeout(r, 800); });
   }
 
   _iaCorreindo = false;
