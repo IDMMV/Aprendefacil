@@ -236,6 +236,35 @@ body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:
 
 }
 
+
+/* ━━━━ DISEÑO POR NIVEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* INICIAL — letras grandes, colores vivos */
+body.nivel-inicial .card-title { font-size:17px !important; }
+body.nivel-inicial .card-sub   { font-size:13px !important; }
+body.nivel-inicial .card       { border-radius:18px !important; border-width:3px !important; }
+body.nivel-inicial .lesson-block{ border-radius:18px !important; }
+body.nivel-inicial #lesConcepto { font-size:16px !important; line-height:2 !important; }
+body.nivel-inicial .lesson-block h3 { font-size:17px !important; }
+body.nivel-inicial .mq-pregunta { font-size:17px !important; font-weight:800 !important; }
+body.nivel-inicial .mq-opt      { font-size:15px !important; padding:14px !important; }
+
+/* PRIMARIA — diseño normal (default) */
+
+/* SECUNDARIA — sobrio y profesional */
+body.nivel-secundaria .card       { border-radius:10px !important; }
+body.nivel-secundaria .lesson-block{ border-radius:10px !important; }
+body.nivel-secundaria #lesConcepto { font-size:13px !important; line-height:1.7 !important; }
+body.nivel-secundaria .main-header { background:linear-gradient(135deg,#2d3436,#636e72,#6c5ce7) !important; }
+body.nivel-secundaria .nivel-btn.active { background:rgba(255,255,255,0.3) !important; }
+
+
+/* ━━━━ CONFETI ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@keyframes confettiCaer{
+  0%  { transform:translateY(-20px) rotate(0deg); opacity:1; }
+  100%{ transform:translateY(100vh) rotate(720deg); opacity:0; }
+}
+
 /* ━━━━ EXTRA PEQUEÑO < 380px ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 @media(max-width:380px){
   .nivel-btn{ padding:6px 10px !important; font-size:11px !important; }
@@ -4154,46 +4183,7 @@ function _mezclar(arr){
 }
 
 // Iniciar examen rápido desde la tarjeta del dashboard
-function iniciarExamenRapido(){
-  var pctProgreso = 0;
-  var totalTemas = db.temas.filter(function(t){
-    return (t.nivel||'').toLowerCase()===currentNivel && parseInt(t.grado)===parseInt(currentGrado);
-  }).length;
-  var completados = db.temas.filter(function(t){
-    if((t.nivel||'').toLowerCase()!==currentNivel) return false;
-    if(parseInt(t.grado)!==parseInt(currentGrado)) return false;
-    try{ return parseInt(localStorage.getItem('af_p_'+t.id)||0)>=50; }catch(e){ return false; }
-  }).length;
-  pctProgreso = totalTemas>0?Math.round(completados/totalTemas*100):0;
-
-  if(pctProgreso < 30 && !isAdmin){
-    Swal.fire({
-      icon:'info', title:'¡Sigue estudiando!',
-      html:'<p>Llevas el <b>'+pctProgreso+'%</b> del grado.</p>'+
-           '<p style="margin-top:8px;font-size:13px;color:#636e72">Completa al menos el <b>30%</b> de los temas para rendir el examen.</p>',
-      confirmButtonColor:'#6c5ce7', confirmButtonText:'Seguir estudiando 📚'
-    });
-    return;
-  }
-
-  // Extraer y mezclar preguntas
-  var todasPregs = _extraerPreguntasGrado(currentNivel, currentGrado, '');
-  if(todasPregs.length === 0){
-    Swal.fire({
-      icon:'warning', title:'Sin preguntas',
-      html:'<p>No hay preguntas en el contenido de los temas de '+currentNivel+' '+currentGrado+'°.</p>'+
-           '<p style="margin-top:8px;font-size:13px;color:#636e72">El administrador debe cargar el Excel con el contenido.</p>',
-      confirmButtonColor:'#6c5ce7'
-    });
-    return;
-  }
-
-  var mezcladas = _mezclar(todasPregs);
-  var seleccionadas = mezcladas.slice(0, 20); // máx 20 preguntas
-
-  // Lanzar el examen
-  _lanzarExamenAuto(seleccionadas, currentNivel, currentGrado);
-}
+// iniciarExamenRapido → reemplazada por iniciarExamenDesdeCard
 
 // Lanzar el examen con las preguntas seleccionadas
 function _lanzarExamenAuto(preguntas, nivel, grado){
@@ -4392,7 +4382,7 @@ function _mostrarResultadoAuto(){
     var btnV = document.getElementById('btnVolverEx');
     if(btnV) btnV.onclick = function(){ showView('dashboard'); };
     var btnR = document.getElementById('btnRepetirEx');
-    if(btnR) btnR.onclick = function(){ iniciarExamenRapido(); };
+    if(btnR) btnR.onclick = function(){ iniciarExamenDesdeCard(); };
   }, 50);
 
   // Guardar nota en el progreso
@@ -4426,7 +4416,13 @@ function generarBancoPreguntas(nivel, grado, curso){
 
   temasFiltrados.forEach(function(t){
     var c = t.contenido;
-    if(typeof c === 'string'){ try{ c = JSON.parse(c); }catch(e){ c={}; } }
+    // Manejar contenido como string, objeto o null
+    if(!c){ c = {}; }
+    else if(typeof c === 'string'){
+      try{ c = JSON.parse(c); }catch(e){ c = {}; }
+    }
+    // Si c es array (formato legacy), convertir
+    if(Array.isArray(c)){ c = {}; }
     c = c || {};
 
     // 1. Preguntas definidas en el contenido
@@ -4544,56 +4540,69 @@ function _autoSyncDrive(silencioso){
 function actualizarTarjetaExamen(){
   var card = document.getElementById('examenCard');
   if(!card) return;
-
-  // Solo mostrar si hay temas cargados
   if(db.temas.length === 0){ card.style.display='none'; return; }
 
-  // Generar banco de preguntas para el nivel/grado actual
   var banco = generarBancoPreguntas(currentNivel, currentGrado, '');
   if(banco.length === 0){ card.style.display='none'; return; }
 
   card.style.display = 'block';
 
-  // Actualizar textos
+  // Stats del grado
+  var totalGrado = db.temas.filter(function(t){
+    return (t.nivel||'').toLowerCase()===currentNivel && parseInt(t.grado)===currentGrado;
+  }).length;
+
+  var progreso = getEstadisticasProgreso();
+  var completadosGrado = 0;
+  if(progreso && progreso.cursos){
+    Object.values(progreso.cursos).forEach(function(v){ completadosGrado += v; });
+  }
+  var pctProgreso = totalGrado > 0 ? Math.min(100, Math.round(completadosGrado/totalGrado*100)) : 0;
+
   var nivelLabel = currentNivel.charAt(0).toUpperCase()+currentNivel.slice(1);
+  var tiempoMin  = Math.round(Math.min(banco.length, 20) * 0.5);
+
   var el;
-  el = document.getElementById('exCardTitulo');
+  el=document.getElementById('exCardTitulo');
   if(el) el.textContent = 'Examen de '+nivelLabel+' '+currentGrado+'°';
-  el = document.getElementById('exCardSub');
-  if(el) el.textContent = 'Pon a prueba todo lo que aprendiste este grado';
-  el = document.getElementById('exCardInfo');
-  if(el) el.textContent = '📚 '+banco.length+' preguntas disponibles · ⏱ '+Math.round(banco.length*0.5)+' min aprox.';
+  el=document.getElementById('exCardSub');
+  if(el) el.textContent = 'Pon a prueba todo lo que aprendiste';
 
-  // Verificar si tiene acceso al examen
+  // Barra de progreso
+  var barra = document.getElementById('exCardBarra');
+  var progresoTxt = document.getElementById('exCardProgreso');
+  var pregsTxt    = document.getElementById('exCardPregs');
+  if(barra) barra.style.width = pctProgreso+'%';
+  if(progresoTxt) progresoTxt.textContent = pctProgreso+'% de temas completados';
+  if(pregsTxt) pregsTxt.textContent = Math.min(banco.length,20)+' preguntas disponibles · ⏱ '+tiempoMin+' min';
+
+  // Botón según acceso
   var tieneAcceso = isAdmin || verificarHabilitacionExamen() || window._modoInvitado;
-  var btnEx  = document.getElementById('btnExamenCard');
-  var lockEl = document.getElementById('exCardLock');
-  if(btnEx)  btnEx.style.display  = tieneAcceso ? 'flex' : 'none';
-  if(lockEl) lockEl.style.display = tieneAcceso ? 'none' : 'flex';
+  var btn  = document.getElementById('exCardBtn') || document.getElementById('btnExamenCard');
+  var lock = document.getElementById('exCardLock');
+  if(btn)  btn.style.display  = tieneAcceso ? 'flex' : 'none';
+  if(lock) lock.style.display = tieneAcceso ? 'none' : 'flex';
 
-  // Mostrar historial de notas guardadas
-  var histKey = 'af_historial_'+currentNivel+'_'+currentGrado;
+  // Historial
   try{
+    var histKey = 'af_historial_'+currentNivel+'_'+currentGrado;
     var hist = JSON.parse(localStorage.getItem(histKey)||'[]');
     var histBox  = document.getElementById('exHistorial');
     var histList = document.getElementById('exHistorialList');
     if(hist.length > 0 && histBox && histList){
       histBox.style.display = 'block';
       histList.innerHTML = hist.slice(-3).reverse().map(function(h){
-        var colorNota = h.nota >= 14 ? '#00b894' : h.nota >= 11 ? '#f39c12' : '#e74c3c';
-        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee">'+
+        var colorNota = h.nota >= 14?'#00b894':h.nota >= 11?'#f39c12':'#e74c3c';
+        return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee">'+
           '<div><div style="font-size:12px;font-weight:700">'+h.fecha+'</div>'+
           '<div style="font-size:11px;color:#888">'+h.correctas+'/'+h.total+' correctas</div></div>'+
-          '<div style="font-size:22px;font-weight:900;color:'+colorNota+'">'+h.nota+'/20</div>'+
-        '</div>';
+          '<div style="font-size:22px;font-weight:900;color:'+colorNota+'">'+h.nota+'/20</div></div>';
       }).join('');
-    } else if(histBox){
-      histBox.style.display = 'none';
-    }
+    } else if(histBox){ histBox.style.display='none'; }
   }catch(e){}
 }
 
-// Iniciar examen desde la tarjeta del dashboard
+
 function iniciarExamenDesdeCard(){
   // Generar banco completo
   var banco = generarBancoPreguntas(currentNivel, currentGrado, '');
@@ -4822,7 +4831,6 @@ function hideAdminLogin(){
 // ── Sincronizar temas enriquecidos con Drive ─────────────
 function _iaSyncDrive(){
   return new Promise(function(resolve, reject){
-    var cbName = 'cb_ia_sync_' + Date.now();
     var temasData = db.temas.map(function(t){
       return {
         id:        t.id,
@@ -4835,38 +4843,272 @@ function _iaSyncDrive(){
       };
     });
 
-    // Usar drivePostViaGet para enviar los datos
-    var payload = JSON.stringify({ action:'syncAll', data:{ temas: temasData } });
-    var url = APPS_SCRIPT_URL + '?mode=post&payload=' +
-              encodeURIComponent(payload) + '&callback=' + cbName + '&t=' + Date.now();
-
-    var timer = setTimeout(function(){
-      delete window[cbName];
-      var s = document.getElementById('s_'+cbName);
-      if(s) s.remove();
-      reject(new Error('Timeout al subir a Drive'));
-    }, 30000);
-
-    window[cbName] = function(data){
-      clearTimeout(timer);
-      delete window[cbName];
-      var s = document.getElementById('s_'+cbName);
-      if(s) s.remove();
-      if(data && data.ok) resolve(data);
-      else reject(new Error((data&&data.error)||'Error desconocido'));
-    };
-
-    var s = document.createElement('script');
-    s.id  = 's_' + cbName;
-    s.src = url;
-    s.onerror = function(){
-      clearTimeout(timer);
-      delete window[cbName];
-      s.remove();
-      reject(new Error('Error de red'));
-    };
-    document.head.appendChild(s);
+    // Usar POST a través del Apps Script (evita límite de URL con caracteres especiales)
+    drivePostViaGet(APPS_SCRIPT_URL, {action:'syncAll', data:{temas: temasData}})
+      .then(function(res){
+        if(res && res.ok) resolve(res);
+        else reject(new Error((res&&res.error)||'Error al sincronizar'));
+      })
+      .catch(function(err){
+        reject(err);
+      });
   });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MEJORA 1: CONTINUAR DONDE LO DEJÉ
+// ═══════════════════════════════════════════════════════════
+function actualizarBtnContinuar(){
+  var box = document.getElementById('continuarBox');
+  var sub = document.getElementById('continuarSub');
+  if(!box || db.temas.length === 0){ if(box) box.style.display='none'; return; }
+
+  // Buscar el último tema visto o el primer tema sin completar del nivel/grado actual
+  var key = 'af_ultimo_tema';
+  var ultimoId = localStorage.getItem(key);
+  var temasFiltrados = db.temas.filter(function(t){
+    return (t.nivel||'').toLowerCase()===currentNivel && parseInt(t.grado)===currentGrado;
+  });
+  if(temasFiltrados.length === 0){ box.style.display='none'; return; }
+
+  // Buscar primer tema incompleto
+  var progreso = {};
+  try{
+    var raw = localStorage.getItem('af_progreso');
+    if(raw) progreso = JSON.parse(raw);
+  }catch(e){}
+
+  var siguienteTema = null;
+
+  // Primero: si hay un último tema visto, buscar el siguiente después de ese
+  if(ultimoId){
+    var idx = temasFiltrados.findIndex(function(t){ return t.id===ultimoId; });
+    if(idx >= 0 && idx < temasFiltrados.length-1){
+      siguienteTema = temasFiltrados[idx+1];
+    }
+  }
+
+  // Si no, buscar el primer tema sin completar
+  if(!siguienteTema){
+    siguienteTema = temasFiltrados.find(function(t){
+      return !progreso[t.id] || (progreso[t.id].pct||0) < 50;
+    }) || temasFiltrados[0];
+  }
+
+  if(!siguienteTema){ box.style.display='none'; return; }
+
+  // Mostrar el botón con info del siguiente tema
+  box.style.display = 'block';
+  var completados = temasFiltrados.filter(function(t){
+    return progreso[t.id] && (progreso[t.id].pct||0) >= 50;
+  }).length;
+  var pct = Math.round(completados/temasFiltrados.length*100);
+
+  if(sub) sub.textContent = '📚 '+siguienteTema.titulo+' · '+completados+'/'+temasFiltrados.length+' completados ('+pct+'%)';
+  box._nextTemaId = siguienteTema.id;
+}
+
+function continuarAprendizaje(){
+  var box = document.getElementById('continuarBox');
+  if(!box || !box._nextTemaId){ return; }
+  var tema = db.temas.find(function(t){ return t.id===box._nextTemaId; });
+  if(tema){
+    // Cambiar a nivel/grado correcto si es diferente
+    if(tema.nivel !== currentNivel) setNivel(tema.nivel);
+    if(parseInt(tema.grado) !== currentGrado) setGrado(parseInt(tema.grado));
+    verLeccion(tema.id);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MEJORA 2: CELEBRACIÓN AL TERMINAR UN TEMA
+// ═══════════════════════════════════════════════════════════
+
+var _puntosAcumulados = 0;
+
+function celebrarTemaCompletado(tema, nota){
+  nota = nota || 100;
+
+  // Puntos según la nota
+  var puntos = nota >= 90 ? 30 : nota >= 70 ? 20 : nota >= 50 ? 10 : 5;
+  _puntosAcumulados += puntos;
+
+  // Mensaje motivador según nivel
+  var mensajes = {
+    inicial: ['¡Genial! 🌟','¡Muy bien! 🎉','¡Excelente! 🦋','¡Lo lograste! ⭐'],
+    primaria: ['¡Excelente trabajo! 🚀','¡Eres un crack! 💪','¡Sigue así! 🔥','¡Increíble! 🏆'],
+    secundaria: ['¡Muy bien logrado! 💡','¡Sólido conocimiento! 🎯','¡Dominas el tema! 🧠','¡Excelente! 📚']
+  };
+  var msgs = mensajes[currentNivel] || mensajes.primaria;
+  var msg = msgs[Math.floor(Math.random()*msgs.length)];
+
+  // Lanzar confeti CSS
+  _lanzarConfeti();
+
+  // Sonido de celebración (Web Audio API)
+  _tocarSonidoCelebracion();
+
+  // Toast especial con puntos
+  _mostrarToastCelebracion(msg, puntos, nota);
+
+  // Verificar logros
+  try{ checkLogros(); }catch(e){}
+}
+
+function _lanzarConfeti(){
+  var container = document.getElementById('confettiContainer');
+  if(!container){
+    container = document.createElement('div');
+    container.id = 'confettiContainer';
+    container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden';
+    document.body.appendChild(container);
+  }
+  container.innerHTML = '';
+  var colores = ['#6c5ce7','#fd79a8','#fdcb6e','#00b894','#e17055','#a29bfe','#55efc4','#ffeaa7'];
+  for(var i=0; i<60; i++){
+    var p = document.createElement('div');
+    var color = colores[Math.floor(Math.random()*colores.length)];
+    var size  = Math.random()*10+5;
+    var left  = Math.random()*100;
+    var delay = Math.random()*0.8;
+    var dur   = Math.random()*1.5+1.5;
+    var shape = Math.random() > 0.5 ? '50%' : '0';
+    p.style.cssText = 'position:absolute;top:-20px;left:'+left+'%;width:'+size+'px;height:'+size+'px;'+
+      'background:'+color+';border-radius:'+shape+';'+
+      'animation:confettiCaer '+dur+'s '+delay+'s ease-in forwards;'+
+      'transform:rotate('+Math.random()*360+'deg)';
+    container.appendChild(p);
+  }
+  setTimeout(function(){ if(container) container.innerHTML=''; }, 3500);
+}
+
+function _tocarSonidoCelebracion(){
+  try{
+    var ctx = new (window.AudioContext||window.webkitAudioContext)();
+    var notas = [523, 659, 784, 1047]; // Do Mi Sol Do
+    notas.forEach(function(freq, i){
+      var osc  = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + i*0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.15 + 0.3);
+      osc.start(ctx.currentTime + i*0.15);
+      osc.stop(ctx.currentTime + i*0.15 + 0.3);
+    });
+  }catch(e){}
+}
+
+function _mostrarToastCelebracion(mensaje, puntos, nota){
+  var toast = document.getElementById('toastCelebracion');
+  if(!toast){
+    toast = document.createElement('div');
+    toast.id = 'toastCelebracion';
+    toast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);'+
+      'background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;'+
+      'border-radius:20px;padding:14px 24px;font-size:14px;font-weight:800;'+
+      'box-shadow:0 8px 30px rgba(108,92,231,.5);z-index:10000;'+
+      'opacity:0;transition:all .4s ease;text-align:center;min-width:220px;pointer-events:none';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = '<div style="font-size:22px;margin-bottom:4px">'+mensaje+'</div>'+
+    '<div style="font-size:12px;opacity:.9">+'+puntos+' puntos ⭐</div>';
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(function(){
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(-20px)';
+  }, 2500);
+}
+
+// ── Aplicar clase de nivel al body ───────────────────────
+function aplicarClaseNivel(nivel){
+  document.body.classList.remove('nivel-inicial','nivel-primaria','nivel-secundaria');
+  document.body.classList.add('nivel-'+(nivel||'primaria'));
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MEJORA 4: RACHA DIARIA
+// ═══════════════════════════════════════════════════════════
+
+function actualizarRacha(){
+  var hoy  = new Date().toDateString();
+  var ayer = new Date(Date.now()-86400000).toDateString();
+
+  try{
+    var rachaData = JSON.parse(localStorage.getItem('af_racha')||'{"dias":0,"ultima":""}');
+    var ultima = rachaData.ultima;
+
+    if(ultima === hoy){
+      // Ya se registró hoy — no hacer nada
+      return rachaData.dias;
+    } else if(ultima === ayer){
+      // Continuó la racha
+      rachaData.dias++;
+    } else if(!ultima){
+      // Primera vez
+      rachaData.dias = 1;
+    } else {
+      // Se rompió la racha
+      var diasPerdidos = Math.round((new Date(hoy) - new Date(ultima))/(86400000));
+      if(diasPerdidos > 1){
+        var rachaAnterior = rachaData.dias;
+        rachaData.dias = 1;
+        // Notificar si tenía una racha buena
+        if(rachaAnterior >= 3){
+          setTimeout(function(){
+            showToast('😔 Rompiste tu racha de '+rachaAnterior+' días. ¡Empieza de nuevo!');
+          }, 2000);
+        }
+      } else {
+        rachaData.dias = 1;
+      }
+    }
+    rachaData.ultima = hoy;
+    localStorage.setItem('af_racha', JSON.stringify(rachaData));
+
+    // Mostrar celebración si llega a hito
+    if([3,7,14,30,60,100].indexOf(rachaData.dias) >= 0){
+      setTimeout(function(){
+        _lanzarConfeti();
+        _tocarSonidoCelebracion();
+        Swal.fire({
+          icon:'success',
+          title:'🔥 ¡'+rachaData.dias+' días seguidos!',
+          html:'<p style="font-size:15px">¡Increíble constancia! Llevas <b>'+rachaData.dias+' días</b> estudiando sin parar.</p>'+
+            '<p style="font-size:13px;color:#888">La constancia es la clave del éxito 💪</p>',
+          confirmButtonColor:'#6c5ce7',
+          timer: 4000,
+          timerProgressBar: true
+        });
+      }, 1000);
+    }
+    return rachaData.dias;
+  }catch(e){ return 0; }
+}
+
+function obtenerRacha(){
+  try{
+    var rachaData = JSON.parse(localStorage.getItem('af_racha')||'{"dias":0}');
+    return rachaData.dias || 0;
+  }catch(e){ return 0; }
+}
+
+// Widget de racha visible en el dashboard
+function mostrarWidgetRacha(){
+  var widget = document.getElementById('rachaWidget');
+  if(!widget) return;
+  var dias = obtenerRacha();
+  if(dias === 0){ widget.style.display='none'; return; }
+  widget.style.display = 'flex';
+  var emoji = dias >= 30 ? '🏆' : dias >= 14 ? '⚡' : dias >= 7 ? '🔥' : dias >= 3 ? '✨' : '⭐';
+  widget.innerHTML =
+    '<span style="font-size:20px">'+emoji+'</span>'+
+    '<div>'+
+      '<div style="font-size:13px;font-weight:800;color:#e17055">'+dias+' días seguidos</div>'+
+      '<div style="font-size:10px;color:#888">¡Sigue así!</div>'+
+    '</div>';
 }
 
 document.addEventListener('DOMContentLoaded',function(){
@@ -4874,8 +5116,11 @@ document.addEventListener('DOMContentLoaded',function(){
   aplicarConfig();   // Aplicar configuración guardada
   restaurarSesionAlumno(); // Restaurar sesión de alumno con código
   _renderGradosBarMobile(currentNivel); // Init barra grados móvil
+  aplicarClaseNivel(currentNivel); // Aplicar clase de nivel
   _updateBottomNav(); // Init barra inferior
   actualizarBarraUsuario(); // Init barra usuario
+  actualizarRacha(); // Actualizar racha diaria
+  mostrarWidgetRacha(); // Mostrar widget
   try{
     var local=localStorage.getItem('af_db');
     if(local){db=JSON.parse(local);}
@@ -5071,6 +5316,7 @@ function enviarSug(){var t=document.getElementById('sugTxt').value;if(!t&&curren
 // ═══════════════════════════════════════════════════════════
 function setNivel(n){
   currentNivel=n;
+  aplicarClaseNivel(n);
   document.querySelectorAll('.nivel-btn').forEach(function(b){b.classList.remove('active');});
   event.currentTarget.classList.add('active');
   var title=document.getElementById('sidebarTitle');
@@ -5154,6 +5400,8 @@ function renderCursoTabs(){
 function renderDashboard(){
   var label=currentNivel.toUpperCase()+' — '+currentGrado+(currentNivel==='inicial'?' Años':'° Grado');
   setTimeout(actualizarTarjetaExamen, 100);
+  setTimeout(actualizarBtnContinuar, 150);
+  setTimeout(mostrarWidgetRacha, 200);
   document.getElementById('secTitle').textContent=label;
   registrarCursosDeExcel();
   renderCursoTabs();
@@ -5189,6 +5437,7 @@ var activeLesson=null,activeMqIndex=0,activeMqQuestions=[],mqCorrectCount=0;
 
 function verLeccion(id){
   var t = db.temas.find(function(x){ return x.id===id; });
+  if(t) try{ localStorage.setItem('af_ultimo_tema', id); }catch(e){}
   if(!t) return;
   activeLesson = t;
   showView('lesson');
@@ -5473,6 +5722,8 @@ function verLeccion(id){
       document.getElementById('mqFeedback').className='mq-fb';
       document.getElementById('mqNextBtn').style.display='none';
       guardarProgresoLeccion(t.id, 100);
+    celebrarTemaCompletado(t, 100);
+    actualizarBtnContinuar();
     } else {
       renderMqQuestion();
     }
@@ -7226,6 +7477,23 @@ async function guardarTodoA_Drive_silencioso(){
 <div class="icon" id="secIcon">📐</div>
 <div><h2 id="secTitle">Matemática</h2><p id="secSub">Suma y Resta Divertida</p></div>
 </div>
+<!-- WIDGET RACHA DIARIA -->
+<div id="rachaWidget" style="display:none;align-items:center;gap:8px;background:linear-gradient(135deg,#e17055,#fdcb6e);color:#fff;border-radius:12px;padding:8px 14px;margin-bottom:10px;font-size:13px">
+</div>
+
+<!-- BOTÓN CONTINUAR -->
+<div id="continuarBox" style="display:none;margin-bottom:12px">
+  <button onclick="continuarAprendizaje()"
+    style="width:100%;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;border:none;border-radius:14px;padding:14px 20px;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left;box-shadow:0 4px 15px rgba(108,92,231,.3)">
+    <div style="font-size:28px">▶️</div>
+    <div style="flex:1">
+      <div style="font-size:15px;font-weight:900">Continuar donde lo dejé</div>
+      <div id="continuarSub" style="font-size:12px;opacity:.85;margin-top:2px">Cargando...</div>
+    </div>
+    <i class="fas fa-chevron-right" style="opacity:.7"></i>
+  </button>
+</div>
+
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
 <div class="course-tabs" id="courseTabs" style="flex:1;margin:0">
 <button class="course-tab active" data-curso="todos" onclick="setCurso('todos')">🌟 Todos</button>
@@ -7241,35 +7509,7 @@ async function guardarTodoA_Drive_silencioso(){
 <h3 class="slabel">💡 Fórmulas Mágicas</h3>
 <div class="formulas-grid" id="formulasGrid"><div class="empty-state" style="grid-column:1/-1"><p style="font-size:14px;color:var(--muted)">No hay fórmulas registradas en este grado.</p></div></div>
 <!-- TARJETA DE EXAMEN DEL GRADO -->
-<div id="cardExamen" style="margin:20px 0;display:none">
-  <div style="background:linear-gradient(135deg,#e74c3c,#c0392b);border-radius:18px;padding:20px 24px;color:#fff;position:relative;overflow:hidden">
-    <!-- Decoración de fondo -->
-    <div style="position:absolute;right:-20px;top:-20px;font-size:100px;opacity:.1">🎓</div>
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
-      <div style="font-size:38px">📝</div>
-      <div>
-        <div id="exCardTitulo" style="font-size:18px;font-weight:900">Examen de Primaria 3°</div>
-        <div id="exCardSub" style="font-size:13px;opacity:.85;margin-top:2px">Pon a prueba todo lo que aprendiste</div>
-      </div>
-    </div>
-    <!-- Barra de progreso del grado -->
-    <div style="background:rgba(255,255,255,.2);border-radius:20px;height:8px;margin-bottom:8px;overflow:hidden">
-      <div id="exCardBarra" style="background:#fff;height:100%;border-radius:20px;width:0%;transition:width .5s"></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <span id="exCardProgreso" style="font-size:12px;opacity:.85">0% completado</span>
-      <span id="exCardPregs" style="font-size:12px;opacity:.85">0 preguntas disponibles</span>
-    </div>
-    <!-- Alerta si no hay suficiente progreso -->
-    <div id="exCardAlerta" style="display:none;background:rgba(255,255,255,.15);border-radius:10px;padding:10px 14px;font-size:12px;margin-bottom:12px">
-      💡 Completa al menos el <b>30%</b> de los temas antes del examen
-    </div>
-    <button id="exCardBtn" onclick="iniciarExamenRapido()"
-      style="width:100%;background:#fff;color:#e74c3c;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px">
-      <i class="fas fa-graduation-cap"></i> <span id="exCardBtnTxt">Rendir Examen del Grado</span>
-    </button>
-  </div>
-</div>
+<!-- cardExamen eliminado — reemplazado por examenCard -->
 
 <div style="display:flex;justify-content:center;margin:24px 0 8px 0">
 <button class="mode-btn active" onclick="verQuizCompleto()" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;border:none;padding:14px 36px;font-size:16px;border-radius:50px;box-shadow:0 4px 16px rgba(108,92,231,0.3);font-weight:800;display:flex;align-items:center;gap:10px">
@@ -7574,8 +7814,7 @@ async function guardarTodoA_Drive_silencioso(){
 <div class="view" id="view-examen">
 <div style="max-width:680px;margin:0 auto;padding:20px 16px">
 
-  <!-- Pantalla de configuración -->
-  <div <!-- Panel de bloqueo cuando el examen no está habilitado -->
+  <!-- Panel de bloqueo cuando el examen no está habilitado -->
 <div id="examenLock" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center">
   <div style="font-size:64px;margin-bottom:16px">🔒</div>
   <h2 style="margin-bottom:8px;color:var(--text)">Examen Bloqueado</h2>
