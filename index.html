@@ -4452,6 +4452,16 @@ function generarBancoPreguntas(nivel, grado, curso){
     var pregsDefinidas = c.preguntas || t.preguntas || [];
     pregsDefinidas.forEach(function(p){
       if(p.texto && p.opcionA && p.correcta){
+        // Normalizar correcta — si es texto, convertir a letra
+        var correctaNorm = p.correcta;
+        if(correctaNorm && correctaNorm.length > 1){
+          // Es texto — buscar qué opción coincide
+          if(correctaNorm === p.opcionA) correctaNorm = 'A';
+          else if(correctaNorm === p.opcionB) correctaNorm = 'B';
+          else if(correctaNorm === p.opcionC) correctaNorm = 'C';
+          else if(correctaNorm === p.opcionD) correctaNorm = 'D';
+          else correctaNorm = 'A'; // fallback
+        }
         banco.push({
           temaId:   t.id,
           titulo:   t.titulo,
@@ -4461,7 +4471,7 @@ function generarBancoPreguntas(nivel, grado, curso){
           opcionB:  p.opcionB || '',
           opcionC:  p.opcionC || '',
           opcionD:  p.opcionD || '',
-          correcta: p.correcta,
+          correcta: correctaNorm,
           explicacion: p.explicacion || ''
         });
       }
@@ -4715,8 +4725,10 @@ function _ejecutarExamen(preguntas){
   if(act){ act.style.display  = 'block'; act.style.visibility = 'visible'; }
 
   function mostrarPregunta(){
+    console.log('mostrarPregunta idx='+idx+' total='+total);
     if(idx >= total){ mostrarResultado(); return; }
     var p = preguntas[idx];
+    console.log('pregunta:', p ? p.texto : 'NULL');
     tiempoLeft = 30;
 
     // Opciones — mezclar manteniendo la correcta
@@ -4725,7 +4737,18 @@ function _ejecutarExamen(preguntas){
     if(p.opcionC) opts.push({letra:'C', texto:p.opcionC});
     if(p.opcionD) opts.push({letra:'D', texto:p.opcionD});
 
-    var correctaTexto = p['opcion'+p.correcta] || p.opcionA;
+    // Normalizar 'correcta' — puede ser letra (A/B/C/D) o texto completo
+    var correctaTexto;
+    if(p.correcta && p.correcta.length === 1 && 'ABCD'.indexOf(p.correcta) >= 0){
+      // Es una letra → buscar el texto correspondiente
+      correctaTexto = p['opcion'+p.correcta] || p.opcionA;
+    } else if(p.correcta && p.correcta.length > 1){
+      // Es el texto completo de la respuesta correcta
+      correctaTexto = p.correcta;
+    } else {
+      correctaTexto = p.opcionA;
+    }
+
     opts.sort(function(){ return Math.random()-.5; });
     var nuevaCorrecta = 'A';
     opts.forEach(function(o,i){
@@ -4742,6 +4765,7 @@ function _ejecutarExamen(preguntas){
     var elOpciones = document.getElementById('exOpciones');
     var elFeedback = document.getElementById('exFeedback');
 
+    console.log('elementos:', {elContador:!!elContador, elPregunta:!!elPregunta, elOpciones:!!elOpciones});
     if(elContador) elContador.textContent = 'Pregunta '+(idx+1)+' de '+total;
     if(elTimer)    elTimer.textContent    = '30';
     if(elTimerBar) elTimerBar.style.width = '100%';
@@ -5062,6 +5086,32 @@ function _iaSyncDrive(){
       .then(function(res){ if(res&&res.ok) resolve(res); else reject(new Error((res&&res.error)||'Error')); })
       .catch(reject);
   });
+}
+
+// ── obtenerRacha y checkLogros ────────────────────────────
+function obtenerRacha(){
+  try{
+    var d = JSON.parse(localStorage.getItem('af_racha')||'{"dias":0}');
+    return d.dias || 0;
+  }catch(e){ return 0; }
+}
+
+function checkLogros(){
+  // Verificar y mostrar logros desbloqueados
+  try{
+    var progreso = getEstadisticasProgreso();
+    var completados = progreso ? (progreso.completados || 0) : 0;
+    var hitos = [1, 5, 10, 25, 50, 100, 200, 500];
+    var key = 'af_logros';
+    var logros = JSON.parse(localStorage.getItem(key)||'[]');
+    hitos.forEach(function(h){
+      if(completados >= h && logros.indexOf(h) < 0){
+        logros.push(h);
+        localStorage.setItem(key, JSON.stringify(logros));
+        showToast('🏆 ¡Logro desbloqueado! '+h+' temas completados');
+      }
+    });
+  }catch(e){}
 }
 
 document.addEventListener('DOMContentLoaded',function(){
