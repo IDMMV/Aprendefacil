@@ -4682,7 +4682,10 @@ function iniciarExamenDesdeCard(){
     cancelButtonText:'Cancelar'
   }).then(function(result){
     if(!result.isConfirmed) return;
-    _ejecutarExamen(preguntas);
+    // Pequeño delay para que Swal se cierre completamente antes
+    setTimeout(function(){
+      _ejecutarExamen(preguntas);
+    }, 300);
   });
 }
 
@@ -4704,10 +4707,12 @@ function _ejecutarExamen(preguntas){
   var res  = document.getElementById('examenResultado');
   var lock = document.getElementById('examenLock');
 
+  console.log('_ejecutarExamen:', {act:!!act, cfg:!!cfg, res:!!res, lock:!!lock, total:total});
+
   if(cfg)  cfg.style.display  = 'none';
   if(res)  res.style.display  = 'none';
   if(lock) lock.style.display = 'none';
-  if(act)  act.style.display  = 'block';
+  if(act){ act.style.display  = 'block'; act.style.visibility = 'visible'; }
 
   function mostrarPregunta(){
     if(idx >= total){ mostrarResultado(); return; }
@@ -7803,7 +7808,7 @@ async function guardarTodoA_Drive_silencioso(){
   <button onclick="showView('dashboard')" style="margin-top:12px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px">← Volver al inicio</button>
 </div>
 
-id="examenConfig">
+<div id="examenConfig">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
       <button onclick="showView('dashboard')" style="background:none;border:none;font-size:22px;cursor:pointer">←</button>
       <h2 style="margin:0">Modo Examen 🎓</h2>
