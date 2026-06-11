@@ -237,6 +237,27 @@ body{font-family:var(--font);background:var(--bg);color:var(--texto);overflow-x:
 }
 
 
+/* ━━━━ ESTADOS DEL EXAMEN ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#view-examen #examenConfig   { display: block; }
+#view-examen #examenActivo   { display: none;  }
+#view-examen #examenResultado{ display: none;  }
+#view-examen #examenLock     { display: none;  }
+
+#view-examen.estado-activo   #examenConfig    { display: none  !important; }
+#view-examen.estado-activo   #examenActivo    { display: block !important; }
+#view-examen.estado-activo   #examenResultado { display: none  !important; }
+#view-examen.estado-activo   #examenLock      { display: none  !important; }
+
+#view-examen.estado-resultado #examenConfig   { display: none  !important; }
+#view-examen.estado-resultado #examenActivo   { display: none  !important; }
+#view-examen.estado-resultado #examenResultado{ display: block !important; }
+#view-examen.estado-resultado #examenLock     { display: none  !important; }
+
+#view-examen.estado-bloqueado #examenConfig   { display: none  !important; }
+#view-examen.estado-bloqueado #examenActivo   { display: none  !important; }
+#view-examen.estado-bloqueado #examenResultado{ display: none  !important; }
+#view-examen.estado-bloqueado #examenLock     { display: flex  !important; }
+
 /* ━━━━ DISEÑO POR NIVEL ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 /* INICIAL — letras grandes, colores vivos */
@@ -916,6 +937,8 @@ function cerrarSug(){var o=document.getElementById('sugOv');if(o)o.style.display
 //  DATOS Y ESTADO GLOBAL
 // ═══════════════════════════════════════════════════════════
 var db={temas:[],formulas:[],preguntas:[]};
+var _examenTimer = null;   // Timer global del examen
+var _examenActivo = false; // Flag para evitar múltiples exámenes
 var gameLibrary=[];
 var currentNivel='primaria';
 var currentGrado=3;
@@ -4701,10 +4724,13 @@ function iniciarExamenDesdeCard(){
 
 // Motor del examen
 function _ejecutarExamen(preguntas){
+  // Limpiar cualquier examen anterior
+  if(_examenTimer){ clearInterval(_examenTimer); _examenTimer = null; }
+  _examenActivo = true;
+
   var total     = preguntas.length;
   var idx       = 0;
   var correctas = 0;
-  var timer     = null;
   var tiempoLeft= 30;
 
   // Asegurar que la vista del examen está activa
@@ -4717,12 +4743,17 @@ function _ejecutarExamen(preguntas){
   var res  = document.getElementById('examenResultado');
   var lock = document.getElementById('examenLock');
 
-  console.log('_ejecutarExamen:', {act:!!act, cfg:!!cfg, res:!!res, lock:!!lock, total:total});
-
+  // Usar clase CSS para controlar qué se muestra
+  var viewEx = document.getElementById('view-examen');
+  if(viewEx){
+    viewEx.classList.remove('estado-resultado','estado-bloqueado','estado-activo');
+    viewEx.classList.add('estado-activo');
+  }
+  // También forzar inline por compatibilidad
   if(cfg)  cfg.style.display  = 'none';
   if(res)  res.style.display  = 'none';
   if(lock) lock.style.display = 'none';
-  if(act){ act.style.display  = 'block'; act.style.visibility = 'visible'; }
+  if(act){ act.style.display  = 'block'; }
 
   function mostrarPregunta(){
     console.log('mostrarPregunta idx='+idx+' total='+total);
@@ -4796,15 +4827,17 @@ function _ejecutarExamen(preguntas){
       });
     }
 
-    // Timer
-    if(timer) clearInterval(timer);
-    timer = setInterval(function(){
+    // Timer global — se puede limpiar desde fuera
+    if(_examenTimer){ clearInterval(_examenTimer); }
+    _examenTimer = setInterval(function(){
+      if(!_examenActivo){ clearInterval(_examenTimer); return; }
       tiempoLeft--;
       if(elTimer)    elTimer.textContent    = tiempoLeft;
       if(elTimerBar) elTimerBar.style.width = (tiempoLeft/30*100)+'%';
       if(elTimerBar) elTimerBar.style.background = tiempoLeft>10?'#00b894':'#e74c3c';
       if(tiempoLeft<=0){
-        clearInterval(timer);
+        clearInterval(_examenTimer);
+        _examenTimer = null;
         _marcarRespuesta(null, nuevaCorrecta, p.explicacion||'', function(){ idx++; mostrarPregunta(); });
       }
     }, 1000);
@@ -4839,12 +4872,18 @@ function _ejecutarExamen(preguntas){
   }
 
   function mostrarResultado(){
-    if(timer) clearInterval(timer);
+    _examenActivo = false;
+    if(_examenTimer){ clearInterval(_examenTimer); _examenTimer = null; }
     var nota = Math.round((correctas/total)*20*10)/10;
     var pct  = Math.round(correctas/total*100);
     var emoji= nota>=18?'🏆':nota>=14?'🌟':nota>=11?'👍':'💪';
     var msg  = nota>=18?'¡Sobresaliente!':nota>=14?'¡Aprobado!':nota>=11?'En proceso':'Necesitas repasar';
 
+    var viewEx2 = document.getElementById('view-examen');
+    if(viewEx2){
+      viewEx2.classList.remove('estado-activo','estado-bloqueado');
+      viewEx2.classList.add('estado-resultado');
+    }
     if(act) act.style.display='none';
     if(res){
       res.style.display='block';
