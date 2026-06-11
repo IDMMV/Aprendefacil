@@ -1,4 +1,4 @@
-<!DOCTYPE html><!-- Aprende Facil v9.5 build:1781140421 -->
+<!DOCTYPE html><!-- Aprende Facil v8.1 build:1780850025 -->
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -4852,6 +4852,186 @@ function mostrarWidgetRacha(){
       '<div style="font-size:13px;font-weight:800;color:#e17055">'+dias+' días seguidos</div>'+
       '<div style="font-size:10px;color:#888">¡Sigue así!</div>'+
     '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  FUNCIONES RESTAURADAS
+// ═══════════════════════════════════════════════════════════
+
+// ── Continuar donde lo dejé ──────────────────────────────
+function actualizarBtnContinuar(){
+  var box = document.getElementById('continuarBox');
+  var sub = document.getElementById('continuarSub');
+  if(!box || db.temas.length === 0){ if(box) box.style.display='none'; return; }
+  var ultimoId = localStorage.getItem('af_ultimo_tema');
+  var temasFiltrados = db.temas.filter(function(t){
+    return (t.nivel||'').toLowerCase()===currentNivel && parseInt(t.grado)===currentGrado;
+  });
+  if(temasFiltrados.length === 0){ box.style.display='none'; return; }
+  var progreso = {};
+  try{ var raw=localStorage.getItem('af_progreso'); if(raw) progreso=JSON.parse(raw); }catch(e){}
+  var siguienteTema = null;
+  if(ultimoId){
+    var idx = temasFiltrados.findIndex(function(t){ return t.id===ultimoId; });
+    if(idx >= 0 && idx < temasFiltrados.length-1) siguienteTema = temasFiltrados[idx+1];
+  }
+  if(!siguienteTema){
+    siguienteTema = temasFiltrados.find(function(t){
+      return !progreso[t.id] || (progreso[t.id].pct||0) < 50;
+    }) || temasFiltrados[0];
+  }
+  if(!siguienteTema){ box.style.display='none'; return; }
+  box.style.display = 'block';
+  var completados = temasFiltrados.filter(function(t){
+    return progreso[t.id] && (progreso[t.id].pct||0) >= 50;
+  }).length;
+  var pct = Math.round(completados/temasFiltrados.length*100);
+  if(sub) sub.textContent = '📚 '+siguienteTema.titulo+' · '+completados+'/'+temasFiltrados.length+' completados ('+pct+'%)';
+  box._nextTemaId = siguienteTema.id;
+}
+
+function continuarAprendizaje(){
+  var box = document.getElementById('continuarBox');
+  if(!box || !box._nextTemaId) return;
+  var tema = db.temas.find(function(t){ return t.id===box._nextTemaId; });
+  if(tema){
+    if(tema.nivel !== currentNivel) setNivel(tema.nivel);
+    if(parseInt(tema.grado) !== currentGrado) setGrado(parseInt(tema.grado));
+    verLeccion(tema.id);
+  }
+}
+
+// ── Celebración al terminar tema ─────────────────────────
+function celebrarTemaCompletado(tema, nota){
+  nota = nota || 100;
+  var puntos = nota>=90?30:nota>=70?20:nota>=50?10:5;
+  var mensajes = {
+    inicial:['¡Genial! 🌟','¡Muy bien! 🎉','¡Excelente! 🦋','¡Lo lograste! ⭐'],
+    primaria:['¡Excelente trabajo! 🚀','¡Eres un crack! 💪','¡Sigue así! 🔥','¡Increíble! 🏆'],
+    secundaria:['¡Muy bien logrado! 💡','¡Sólido conocimiento! 🎯','¡Dominas el tema! 🧠','¡Excelente! 📚']
+  };
+  var msgs = mensajes[currentNivel]||mensajes.primaria;
+  var msg = msgs[Math.floor(Math.random()*msgs.length)];
+  _lanzarConfeti();
+  _tocarSonidoCelebracion();
+  _mostrarToastCelebracion(msg, puntos, nota);
+  try{ checkLogros(); }catch(e){}
+}
+
+function _lanzarConfeti(){
+  var container = document.getElementById('confettiContainer');
+  if(!container){
+    container = document.createElement('div');
+    container.id = 'confettiContainer';
+    container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden';
+    document.body.appendChild(container);
+  }
+  container.innerHTML = '';
+  var colores=['#6c5ce7','#fd79a8','#fdcb6e','#00b894','#e17055','#a29bfe','#55efc4','#ffeaa7'];
+  for(var i=0;i<60;i++){
+    var p=document.createElement('div');
+    var color=colores[Math.floor(Math.random()*colores.length)];
+    var size=Math.random()*10+5;
+    var left=Math.random()*100;
+    var delay=Math.random()*0.8;
+    var dur=Math.random()*1.5+1.5;
+    var shape=Math.random()>0.5?'50%':'0';
+    p.style.cssText='position:absolute;top:-20px;left:'+left+'%;width:'+size+'px;height:'+size+'px;'+
+      'background:'+color+';border-radius:'+shape+';'+
+      'animation:confettiCaer '+dur+'s '+delay+'s ease-in forwards;'+
+      'transform:rotate('+Math.random()*360+'deg)';
+    container.appendChild(p);
+  }
+  setTimeout(function(){ if(container) container.innerHTML=''; }, 3500);
+}
+
+function _tocarSonidoCelebracion(){
+  try{
+    var ctx=new (window.AudioContext||window.webkitAudioContext)();
+    var notas=[523,659,784,1047];
+    notas.forEach(function(freq,i){
+      var osc=ctx.createOscillator();
+      var gain=ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value=freq; osc.type='sine';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime+i*0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+i*0.15+0.3);
+      osc.start(ctx.currentTime+i*0.15);
+      osc.stop(ctx.currentTime+i*0.15+0.3);
+    });
+  }catch(e){}
+}
+
+function _mostrarToastCelebracion(mensaje, puntos, nota){
+  var toast=document.getElementById('toastCelebracion');
+  if(!toast){
+    toast=document.createElement('div');
+    toast.id='toastCelebracion';
+    toast.style.cssText='position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);'+
+      'background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;'+
+      'border-radius:20px;padding:14px 24px;font-size:14px;font-weight:800;'+
+      'box-shadow:0 8px 30px rgba(108,92,231,.5);z-index:10000;'+
+      'opacity:0;transition:all .4s ease;text-align:center;min-width:220px;pointer-events:none';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML='<div style="font-size:22px;margin-bottom:4px">'+mensaje+'</div>'+
+    '<div style="font-size:12px;opacity:.9">+'+puntos+' puntos ⭐</div>';
+  toast.style.opacity='1';
+  toast.style.transform='translateX(-50%) translateY(0)';
+  setTimeout(function(){
+    toast.style.opacity='0';
+    toast.style.transform='translateX(-50%) translateY(-20px)';
+  }, 2500);
+}
+
+// ── Racha diaria ─────────────────────────────────────────
+function actualizarRacha(){
+  var hoy=new Date().toDateString();
+  var ayer=new Date(Date.now()-86400000).toDateString();
+  try{
+    var rachaData=JSON.parse(localStorage.getItem('af_racha')||'{"dias":0,"ultima":""}');
+    if(rachaData.ultima===hoy) return rachaData.dias;
+    if(rachaData.ultima===ayer){ rachaData.dias++; }
+    else if(!rachaData.ultima){ rachaData.dias=1; }
+    else {
+      var prev=rachaData.dias;
+      rachaData.dias=1;
+      if(prev>=3) setTimeout(function(){ showToast('😔 Rompiste tu racha de '+prev+' días. ¡Empieza de nuevo!'); },2000);
+    }
+    rachaData.ultima=hoy;
+    localStorage.setItem('af_racha',JSON.stringify(rachaData));
+    if([3,7,14,30,60,100].indexOf(rachaData.dias)>=0){
+      setTimeout(function(){
+        _lanzarConfeti(); _tocarSonidoCelebracion();
+        Swal.fire({icon:'success',title:'🔥 ¡'+rachaData.dias+' días seguidos!',
+          html:'<p>¡Increíble! Llevas <b>'+rachaData.dias+' días</b> estudiando seguidos.</p>',
+          confirmButtonColor:'#6c5ce7',timer:4000,timerProgressBar:true});
+      },1000);
+    }
+    return rachaData.dias;
+  }catch(e){ return 0; }
+}
+
+// ── Aplicar clase de nivel al body ───────────────────────
+function aplicarClaseNivel(nivel){
+  document.body.classList.remove('nivel-inicial','nivel-primaria','nivel-secundaria');
+  document.body.classList.add('nivel-'+(nivel||'primaria'));
+}
+
+// ── Sync Drive para el enriquecedor ──────────────────────
+function _iaSyncDrive(){
+  return new Promise(function(resolve, reject){
+    var temasData = db.temas.map(function(t){
+      return {
+        id:t.id, nivel:t.nivel, grado:t.grado, curso:t.curso,
+        titulo:t.titulo, subtitulo:t.subtitulo||'',
+        contenido:typeof t.contenido==='string'?t.contenido:JSON.stringify(t.contenido||{})
+      };
+    });
+    drivePostViaGet(APPS_SCRIPT_URL, {action:'syncAll', data:{temas:temasData}})
+      .then(function(res){ if(res&&res.ok) resolve(res); else reject(new Error((res&&res.error)||'Error')); })
+      .catch(reject);
+  });
 }
 
 document.addEventListener('DOMContentLoaded',function(){
