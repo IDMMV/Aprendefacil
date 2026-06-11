@@ -5155,7 +5155,12 @@ function renderDashboard(){
 function renderDashboardItems(){
   var grid=document.getElementById('cardsGrid');grid.innerHTML='';
   var fGrid=document.getElementById('formulasGrid');fGrid.innerHTML='';
-  var filteredTemas=db.temas.filter(function(t){return (t.nivel||'').toLowerCase().trim()===currentNivel&&parseInt(t.grado)===currentGrado&&(currentCurso==='todos'||(t.curso||'').toLowerCase().trim()===currentCurso);});
+  var filteredTemas=db.temas.filter(function(t){
+    if((t.nivel||'').toLowerCase().trim()!==currentNivel) return false;
+    if(parseInt(t.grado)!==currentGrado) return false;
+    if(currentCurso!=='todos'&&(t.curso||'').toLowerCase().trim()!==currentCurso) return false;
+    return true;
+  });
   var filteredForms=db.formulas.filter(function(f){return (f.nivel||'').toLowerCase().trim()===currentNivel&&parseInt(f.grado)===currentGrado&&(currentCurso==='todos'||(f.curso||'').toLowerCase().trim()===currentCurso);});
   document.getElementById('secSub').textContent=filteredTemas.length+' temas · '+filteredForms.length+' fórmulas';
   if(filteredTemas.length===0){grid.innerHTML= db.temas.length===0 ?
@@ -6963,8 +6968,26 @@ async function cargarDrive(){
     sBar.innerHTML = '<i class="fas fa-sync-alt fa-spin" style="color:#fdcb6e"></i> Conectando con Drive...';
   }
 
+  // Usar timeout más largo para respuestas con contenido enriquecido
   var cb = 'cb_drive_' + Date.now();
-  jsonpGet(APPS_SCRIPT_URL + '?action=getAll', cb)
+  var drivePromise = new Promise(function(resolve, reject){
+    var timer = setTimeout(function(){
+      delete window[cb];
+      reject(new Error('Timeout — Drive tardó más de 30s'));
+    }, 30000); // 30 segundos para datos grandes
+
+    window[cb] = function(data){
+      clearTimeout(timer);
+      delete window[cb];
+      resolve(data);
+    };
+    var s = document.createElement('script');
+    s.src = APPS_SCRIPT_URL + '?action=getAll&callback=' + cb + '&t=' + Date.now();
+    s.onerror = function(){ clearTimeout(timer); delete window[cb]; s.remove(); reject(new Error('Error de red')); };
+    document.head.appendChild(s);
+  });
+
+  drivePromise
     .then(function(res){
       if(!res || !res.ok){
         if(sBar) sBar.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#f39c12"></i> Drive no respondió';
