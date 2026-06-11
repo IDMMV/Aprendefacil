@@ -5061,7 +5061,11 @@ function setNivel(n){
   currentNivel=n;
   aplicarClaseNivel(n);
   document.querySelectorAll('.nivel-btn').forEach(function(b){b.classList.remove('active');});
-  event.currentTarget.classList.add('active');
+  // Actualizar botón activo de nivel (sin depender de 'event')
+  document.querySelectorAll('.nivel-btn').forEach(function(b){
+    var bnivel = b.getAttribute('onclick');
+    if(bnivel && bnivel.indexOf("'"+n+"'") >= 0) b.classList.add('active');
+  });
   var title=document.getElementById('sidebarTitle');
   var gBox=document.getElementById('gradosBtns');gBox.innerHTML='';
   if(n==='inicial'){
@@ -5078,7 +5082,6 @@ function setNivel(n){
     for(var i=1;i<=5;i++){var act=(i===currentGrado)?'active':'';gBox.innerHTML+='<button class="grado-btn '+act+'" onclick="setGrado('+i+')"><span style="font-size:18px;width:24px;text-align:center">'+icons[i-1]+'</span> '+i+'° Año</button>';}
   }
   renderDashboard();
-  _renderCardExamen();
   _renderGradosBarMobile(n);
 }
 
@@ -5110,7 +5113,6 @@ function setGrado(g){
   document.querySelectorAll('.grado-btn').forEach(function(b){b.classList.remove('active');});
   if(event&&event.currentTarget)event.currentTarget.classList.add('active');
   showView('dashboard');renderDashboard();
-  _renderCardExamen();
   // Sync mobile bar
   document.querySelectorAll('.grado-bar-btn').forEach(function(b,i){ b.classList.remove('active'); });
   var allBtns=document.querySelectorAll('.grado-bar-btn'); allBtns.forEach(function(b){ if(b.textContent.includes(g+'°')||b.textContent.includes(g+' Años')){ b.classList.add('active'); } });
@@ -5149,7 +5151,6 @@ function renderDashboard(){
   registrarCursosDeExcel();
   renderCursoTabs();
   renderDashboardItems();
-  setTimeout(_renderCardExamen, 100);
 }
 
 function renderDashboardItems(){
