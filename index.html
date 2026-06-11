@@ -4429,15 +4429,23 @@ function generarBancoPreguntas(nivel, grado, curso){
     return true;
   });
 
+  // Debug: contar temas filtrados
+  // console.log('Temas filtrados para examen:', temasFiltrados.length, nivel, grado);
+
   temasFiltrados.forEach(function(t){
     var c = t.contenido;
-    // Manejar contenido como string, objeto o null
+    // Manejar TODOS los formatos posibles del contenido
     if(!c){ c = {}; }
     else if(typeof c === 'string'){
-      try{ c = JSON.parse(c); }catch(e){ c = {}; }
+      try{ c = JSON.parse(c); }catch(e){
+        // Si falla el parse, crear objeto vacío
+        c = {};
+      }
     }
-    // Si c es array (formato legacy), convertir
-    if(Array.isArray(c)){ c = {}; }
+    else if(typeof c === 'object' && !Array.isArray(c)){
+      // Ya es objeto — usar directamente
+    }
+    else { c = {}; }
     c = c || {};
 
     // 1. Preguntas definidas en el contenido
@@ -4459,24 +4467,24 @@ function generarBancoPreguntas(nivel, grado, curso){
       }
     });
 
-    // 2. Generar preguntas básicas si no hay definidas
-    // Usar concepto del JSON o del campo directo del tema
+    // 2. SIEMPRE generar al menos 1 pregunta básica por tema
     var conceptoTexto = c.concepto || t.concepto || '';
-    if(pregsDefinidas.length === 0){
-      // Siempre generar al menos 1 pregunta por tema
-      banco.push({
-        temaId:   t.id,
-        titulo:   t.titulo,
-        curso:    t.curso,
-        texto:    '¿De qué trata el tema "' + t.titulo + '"?',
-        opcionA:  t.titulo,
-        opcionB:  _temaAleatorio(temasFiltrados, t.id),
-        opcionC:  _temaAleatorio(temasFiltrados, t.id),
-        opcionD:  _temaAleatorio(temasFiltrados, t.id),
-        correcta: 'A',
-        explicacion: conceptoTexto.substring(0, 120) || 'Tema del curso '+t.curso
-      });
-    }
+    // Pregunta básica de reconocimiento
+    var otroTema1 = _temaAleatorio(temasFiltrados, t.id);
+    var otroTema2 = _temaAleatorio(temasFiltrados, t.id);
+    var otroTema3 = _temaAleatorio(temasFiltrados, t.id);
+    banco.push({
+      temaId:   t.id,
+      titulo:   t.titulo,
+      curso:    t.curso,
+      texto:    '¿Cuál de estos es el tema "' + t.titulo.substring(0,40) + '"?',
+      opcionA:  t.titulo,
+      opcionB:  otroTema1,
+      opcionC:  otroTema2,
+      opcionD:  otroTema3,
+      correcta: 'A',
+      explicacion: conceptoTexto.substring(0, 120) || ('Tema de '+t.curso+', '+t.nivel+' '+t.grado+'°')
+    });
 
     // 3. Preguntas de palabras clave
     if(c.palabrasClave && c.palabrasClave.length >= 2){
@@ -4621,6 +4629,19 @@ function actualizarTarjetaExamen(){
 
 
 function iniciarExamenDesdeCard(){
+  // Verificar que hay temas cargados
+  if(db.temas.length === 0){
+    Swal.fire({
+      icon:'info',
+      title:'Cargando contenido...',
+      html:'<p>Los temas se están cargando desde Drive.</p><p style="font-size:12px;color:#888">Espera unos segundos y vuelve a intentarlo.</p>',
+      confirmButtonColor:'#6c5ce7'
+    });
+    // Intentar cargar
+    try{ cargarDrive(); }catch(e){}
+    return;
+  }
+
   // Generar banco completo
   var banco = generarBancoPreguntas(currentNivel, currentGrado, '');
   if(banco.length === 0){
@@ -4675,6 +4696,7 @@ function _ejecutarExamen(preguntas){
 
   // Asegurar que la vista del examen está activa
   showView('examen');
+  window.scrollTo({top: 0, behavior: 'smooth'});
 
   // Usar elementos existentes en el HTML
   var act  = document.getElementById('examenActivo');
@@ -7826,8 +7848,7 @@ id="examenConfig">
     <button onclick="iniciarExamen()" style="width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border:none;font-size:16px;font-weight:800;cursor:pointer">
       🚀 Comenzar Examen
     </button>
-  </div>
-
+  
   <!-- Pantalla del examen activo -->
   <div id="examenActivo" style="display:none">
     <!-- Header del examen -->
@@ -8604,6 +8625,8 @@ id="examenConfig">
   <button onclick="instalarApp()" style="background:#fff;color:#6c5ce7;border:none;border-radius:20px;padding:8px 16px;font-weight:800;font-size:12px;cursor:pointer">Instalar</button>
   <button onclick="cerrarInstall()" style="background:rgba(255,255,255,0.2);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer">×</button>
 </div>
+</div>
+
 
 </body>
 </html>
