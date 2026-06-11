@@ -4667,17 +4667,18 @@ function iniciarExamenDesdeCard(){
 
 // Motor del examen
 function _ejecutarExamen(preguntas){
-  var idx        = 0;
-  var correctas  = 0;
-  var total      = preguntas.length;
-  var timer      = null;
-  var tiempoLeft = 30;
+  var total     = preguntas.length;
+  var idx       = 0;
+  var correctas = 0;
+  var timer     = null;
+  var tiempoLeft= 30;
 
-  showView('examen');
-  var act = document.getElementById('examenActivo');
-  var cfg = document.getElementById('examenConfig');
-  var res = document.getElementById('examenResultado');
-  var lock= document.getElementById('examenLock');
+  // Usar elementos existentes en el HTML
+  var act  = document.getElementById('examenActivo');
+  var cfg  = document.getElementById('examenConfig');
+  var res  = document.getElementById('examenResultado');
+  var lock = document.getElementById('examenLock');
+
   if(cfg)  cfg.style.display  = 'none';
   if(res)  res.style.display  = 'none';
   if(lock) lock.style.display = 'none';
@@ -4688,440 +4689,156 @@ function _ejecutarExamen(preguntas){
     var p = preguntas[idx];
     tiempoLeft = 30;
 
-    // Construir opciones
+    // Opciones — mezclar manteniendo la correcta
     var opts = [{letra:'A', texto:p.opcionA}];
     if(p.opcionB) opts.push({letra:'B', texto:p.opcionB});
     if(p.opcionC) opts.push({letra:'C', texto:p.opcionC});
     if(p.opcionD) opts.push({letra:'D', texto:p.opcionD});
 
-    // Mezclar opciones manteniendo la correcta
-    var correctaTexto = p['opcion'+p.correcta];
+    var correctaTexto = p['opcion'+p.correcta] || p.opcionA;
     opts.sort(function(){ return Math.random()-.5; });
-    var nuevaCorrecta = '';
+    var nuevaCorrecta = 'A';
     opts.forEach(function(o,i){
-      var l = String.fromCharCode(65+i);
-      o.letra = l;
-      if(o.texto === correctaTexto) nuevaCorrecta = l;
+      o.letra = String.fromCharCode(65+i);
+      if(o.texto === correctaTexto) nuevaCorrecta = o.letra;
     });
 
-    if(act) act.innerHTML =
-      '<div style="max-width:640px;margin:0 auto;padding:20px">'+
-      // Header
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'+
-        '<div style="font-size:13px;font-weight:700;color:#888">Pregunta '+(idx+1)+' de '+total+'</div>'+
-        '<div style="display:flex;align-items:center;gap:8px">'+
-          '<div id="exTimerBar" style="width:80px;height:8px;background:#eee;border-radius:10px;overflow:hidden">'+
-            '<div id="exTimerFill" style="height:100%;background:#00b894;border-radius:10px;transition:width .5s;width:100%"></div>'+
-          '</div>'+
-          '<div id="exTimerNum" style="font-size:13px;font-weight:800;color:#e74c3c;min-width:24px">30</div>'+
-        '</div>'+
-      '</div>'+
-      // Barra progreso
-      '<div style="background:#eee;border-radius:10px;height:6px;margin-bottom:16px">'+
-        '<div style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);height:100%;border-radius:10px;width:'+(idx/total*100)+'%"></div>'+
-      '</div>'+
-      // Tema
-      '<div style="font-size:11px;color:#888;margin-bottom:8px;font-weight:700">📚 '+p.titulo+' · '+p.curso+'</div>'+
-      // Pregunta
-      '<div style="background:var(--card);border-radius:14px;padding:18px;font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;line-height:1.5">'+
-        p.texto+
-      '</div>'+
-      // Opciones
-      '<div id="exOpciones" style="display:flex;flex-direction:column;gap:10px">'+
-        opts.map(function(o){
-          var btnEl = document.createElement('button');
-          btnEl.setAttribute('data-letra', o.letra);
-          btnEl.style.cssText = 'background:var(--card);border:2px solid #eee;border-radius:12px;padding:13px 16px;text-align:left;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;transition:all .15s;width:100%';
-          btnEl.innerHTML = '<span style="min-width:28px;height:28px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px">'+o.letra+'</span>'+o.texto;
-          (function(letra, corr){ btnEl.addEventListener('click', function(){ _responderExamen(this, letra, corr); }); })(o.letra, nuevaCorrecta);
-          return btnEl.outerHTML;
-        }).join('')+
-      '</div>'+
-      '</div>';
+    // Actualizar elementos existentes
+    var elContador = document.getElementById('exContador');
+    var elTimer    = document.getElementById('exTimer');
+    var elTimerBar = document.getElementById('exTimerBar');
+    var elProgBar  = document.getElementById('exProgBar');
+    var elPregunta = document.getElementById('exPregunta');
+    var elOpciones = document.getElementById('exOpciones');
+    var elFeedback = document.getElementById('exFeedback');
+
+    if(elContador) elContador.textContent = 'Pregunta '+(idx+1)+' de '+total;
+    if(elTimer)    elTimer.textContent    = '30';
+    if(elTimerBar) elTimerBar.style.width = '100%';
+    if(elProgBar)  elProgBar.style.width  = (idx/total*100)+'%';
+    if(elFeedback) elFeedback.innerHTML   = '';
+    if(elPregunta) elPregunta.innerHTML   =
+      '<div style="font-size:11px;color:#888;margin-bottom:6px;font-weight:700">'+
+        '📚 '+p.titulo+' · '+p.curso+'</div>'+
+      '<div style="font-size:15px;font-weight:700;line-height:1.5">'+p.texto+'</div>';
+
+    // Renderizar opciones
+    if(elOpciones){
+      elOpciones.innerHTML = opts.map(function(o){
+        return '<button class="ex-opt-btn" data-letra="'+o.letra+'" data-correcta="'+nuevaCorrecta+'" data-explicacion="'+(p.explicacion||'').replace(/"/g,"'")+'">'+
+          '<span style="min-width:28px;height:28px;border-radius:50%;background:#f0f0f0;'+
+          'display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;margin-right:8px">'+
+          o.letra+'</span>'+o.texto+'</button>';
+      }).join('');
+
+      // Agregar eventos a los botones
+      elOpciones.querySelectorAll('.ex-opt-btn').forEach(function(btn){
+        btn.style.cssText = 'width:100%;background:var(--card);border:2px solid #eee;border-radius:12px;'+
+          'padding:13px 16px;text-align:left;cursor:pointer;font-size:13px;font-weight:600;'+
+          'display:flex;align-items:center;margin-bottom:8px;transition:all .15s';
+        btn.onclick = function(){
+          _responderExamen(this, this.dataset.letra, this.dataset.correcta, this.dataset.explicacion);
+        };
+      });
+    }
 
     // Timer
     if(timer) clearInterval(timer);
     timer = setInterval(function(){
       tiempoLeft--;
-      var numEl  = document.getElementById('exTimerNum');
-      var fillEl = document.getElementById('exTimerFill');
-      if(numEl)  numEl.textContent = tiempoLeft;
-      if(fillEl) fillEl.style.width = (tiempoLeft/30*100)+'%';
-      if(fillEl) fillEl.style.background = tiempoLeft > 10 ? '#00b894' : '#e74c3c';
-      if(tiempoLeft <= 0){
+      if(elTimer)    elTimer.textContent    = tiempoLeft;
+      if(elTimerBar) elTimerBar.style.width = (tiempoLeft/30*100)+'%';
+      if(elTimerBar) elTimerBar.style.background = tiempoLeft>10?'#00b894':'#e74c3c';
+      if(tiempoLeft<=0){
         clearInterval(timer);
-        // Tiempo agotado — contar como incorrecta
-        _marcarRespuesta(null, nuevaCorrecta, p.explicacion, function(){ idx++; mostrarPregunta(); });
+        _marcarRespuesta(null, nuevaCorrecta, p.explicacion||'', function(){ idx++; mostrarPregunta(); });
       }
     }, 1000);
   }
 
-  function _responderExamen(btn, elegida, correcta){
+  function _responderExamen(btn, elegida, correcta, explicacion){
     if(timer) clearInterval(timer);
-    var esCorrecta = elegida === correcta;
-    if(esCorrecta) correctas++;
-    _marcarRespuesta(btn, correcta, preguntas[idx].explicacion, function(){ idx++; mostrarPregunta(); });
+    if(elegida===correcta) correctas++;
+    _marcarRespuesta(btn, correcta, explicacion, function(){ idx++; mostrarPregunta(); });
   }
   window._responderExamen = _responderExamen;
 
   function _marcarRespuesta(btnElegido, correcta, explicacion, callback){
-    // Deshabilitar todos los botones
-    var btns = document.querySelectorAll('#exOpciones button');
+    var btns = document.querySelectorAll('.ex-opt-btn');
     btns.forEach(function(b){
-      b.style.pointerEvents = 'none';
-      var letra = b.getAttribute('data-letra');
-      if(letra === correcta){
-        b.style.background = '#d5f5e3'; b.style.borderColor = '#00b894';
-        b.querySelector('span').style.background = '#00b894';
-        b.querySelector('span').style.color = '#fff';
-      } else if(btnElegido && b === btnElegido){
-        b.style.background = '#fde8e8'; b.style.borderColor = '#e74c3c';
+      b.style.pointerEvents='none';
+      if(b.dataset.letra===correcta){
+        b.style.background='#d5f5e3'; b.style.borderColor='#00b894';
+        b.querySelector('span').style.background='#00b894';
+        b.querySelector('span').style.color='#fff';
+      } else if(btnElegido && b===btnElegido){
+        b.style.background='#fde8e8'; b.style.borderColor='#e74c3c';
       }
     });
-    // Mostrar explicación brevemente
-    if(explicacion){
-      var act2 = document.getElementById('examenActivo');
-      var exp = document.createElement('div');
-      exp.style.cssText = 'max-width:640px;margin:10px auto;padding:0 20px';
-      exp.innerHTML = '<div style="background:#fff9e6;border-left:4px solid #f39c12;border-radius:8px;padding:10px 12px;font-size:12px;color:#636e72">'+
+    var elFeedback = document.getElementById('exFeedback');
+    if(explicacion && elFeedback){
+      elFeedback.innerHTML='<div style="background:#fff9e6;border-left:4px solid #f39c12;'+
+        'border-radius:8px;padding:10px 12px;font-size:12px;color:#636e72;margin-top:8px">'+
         '💡 '+explicacion+'</div>';
-      if(act2) act2.appendChild(exp);
     }
-    setTimeout(callback, explicacion ? 1800 : 800);
+    setTimeout(callback, explicacion?1800:800);
   }
 
   function mostrarResultado(){
+    if(timer) clearInterval(timer);
     var nota = Math.round((correctas/total)*20*10)/10;
     var pct  = Math.round(correctas/total*100);
-    var emoji = nota >= 18 ? '🏆' : nota >= 14 ? '🌟' : nota >= 11 ? '👍' : '💪';
-    var msg   = nota >= 18 ? '¡Sobresaliente!' : nota >= 14 ? '¡Aprobado!' : nota >= 11 ? 'En proceso' : 'Necesitas repasar';
+    var emoji= nota>=18?'🏆':nota>=14?'🌟':nota>=11?'👍':'💪';
+    var msg  = nota>=18?'¡Sobresaliente!':nota>=14?'¡Aprobado!':nota>=11?'En proceso':'Necesitas repasar';
 
-    if(act) act.innerHTML =
-      '<div style="max-width:520px;margin:0 auto;padding:20px;text-align:center">'+
-      '<div style="font-size:72px;margin-bottom:8px">'+emoji+'</div>'+
-      '<h2 style="margin:0 0 4px">'+msg+'</h2>'+
-      '<div style="font-size:48px;font-weight:900;color:'+(nota>=11?'#00b894':'#e74c3c')+';margin:12px 0">'+nota+'<span style="font-size:20px;color:#888">/20</span></div>'+
-      '<div style="font-size:14px;color:#888;margin-bottom:20px">'+correctas+' de '+total+' preguntas correctas ('+pct+'%)</div>'+
-      // Barra visual
-      '<div style="background:#eee;border-radius:20px;height:12px;margin-bottom:20px;overflow:hidden">'+
-        '<div style="background:linear-gradient(135deg,'+(nota>=11?'#00b894,#55efc4':'#e74c3c,#fab1a0')+');height:100%;border-radius:20px;width:'+pct+'%"></div>'+
-      '</div>'+
-      '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'+
-        '<button id="btnVolverDash" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer">'+
-          '← Volver al inicio</button>'+
-        '<button id="btnReintentar" style="background:#f8f9fa;color:#636e72;border:2px solid #eee;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer">'+
-          '🔄 Intentar de nuevo</button>'+
-      '</div>'+
-      '</div>';
+    if(act) act.style.display='none';
+    if(res){
+      res.style.display='block';
+      res.innerHTML='<div style="max-width:520px;margin:0 auto;padding:20px;text-align:center">'+
+        '<div style="font-size:72px;margin-bottom:8px">'+emoji+'</div>'+
+        '<h2 style="margin:0 0 4px">'+msg+'</h2>'+
+        '<div style="font-size:48px;font-weight:900;color:'+(nota>=11?'#00b894':'#e74c3c')+';margin:12px 0">'+
+          nota+'<span style="font-size:20px;color:#888">/20</span></div>'+
+        '<div style="font-size:14px;color:#888;margin-bottom:20px">'+
+          correctas+' de '+total+' correctas ('+pct+'%)</div>'+
+        '<div style="background:#eee;border-radius:20px;height:12px;margin-bottom:20px;overflow:hidden">'+
+          '<div style="background:linear-gradient(135deg,'+(nota>=11?'#00b894,#55efc4':'#e74c3c,#fab1a0')+
+          ');height:100%;border-radius:20px;width:'+pct+'%"></div></div>'+
+        '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'+
+          '<button id="btnVolverDash2" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;'+
+            'border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer">'+
+            '← Volver al inicio</button>'+
+          '<button id="btnReintentar2" style="background:#f8f9fa;color:#636e72;border:2px solid #eee;'+
+            'border-radius:12px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer">'+
+            '🔄 Intentar de nuevo</button>'+
+        '</div></div>';
 
-    // Wire up result buttons
-    setTimeout(function(){
-      var btnD = document.getElementById('btnVolverDash');
-      var btnR = document.getElementById('btnReintentar');
-      if(btnD) btnD.onclick = function(){ showView('dashboard'); };
-      if(btnR) btnR.onclick = function(){ iniciarExamenDesdeCard(); };
-    }, 50);
-    // Guardar en historial
+      setTimeout(function(){
+        var b1=document.getElementById('btnVolverDash2');
+        var b2=document.getElementById('btnReintentar2');
+        if(b1) b1.onclick=function(){ showView('dashboard'); };
+        if(b2) b2.onclick=function(){ iniciarExamenDesdeCard(); };
+      },50);
+    }
+
+    // Guardar historial
     try{
-      var histKey = 'af_historial_'+currentNivel+'_'+currentGrado;
-      var hist = JSON.parse(localStorage.getItem(histKey)||'[]');
-      hist.push({
-        fecha:     new Date().toLocaleDateString('es-PE'),
-        nota:      nota,
-        correctas: correctas,
-        total:     total,
-        pct:       pct
-      });
-      localStorage.setItem(histKey, JSON.stringify(hist.slice(-10)));
+      var histKey='af_historial_'+currentNivel+'_'+currentGrado;
+      var hist=JSON.parse(localStorage.getItem(histKey)||'[]');
+      hist.push({fecha:new Date().toLocaleDateString('es-PE'),nota:nota,correctas:correctas,total:total,pct:pct});
+      localStorage.setItem(histKey,JSON.stringify(hist.slice(-10)));
     }catch(e){}
 
-    // Sincronizar progreso
+    // Celebración si aprobó
+    if(nota>=11){ _lanzarConfeti(); _tocarSonidoCelebracion(); }
+
     try{ sincronizarProgresoUsuario(); }catch(e){}
   }
 
-  // Iniciar
   mostrarPregunta();
 }
 
-// ── Aliases para compatibilidad con modal admin viejo ────
-function loginAdmin(){
-  doLoginAdmin();
-}
-function hideAdminLogin(){
-  var modal = document.getElementById('adminModal');
-  if(modal) modal.classList.remove('open');
-  var mainModal = document.getElementById('nombreModal');
-  if(mainModal) mainModal.classList.remove('open');
-}
 
-// ── Sincronizar temas enriquecidos con Drive ─────────────
-function _iaSyncDrive(){
-  return new Promise(function(resolve, reject){
-    var temasData = db.temas.map(function(t){
-      return {
-        id:        t.id,
-        nivel:     t.nivel,
-        grado:     t.grado,
-        curso:     t.curso,
-        titulo:    t.titulo,
-        subtitulo: t.subtitulo||'',
-        contenido: typeof t.contenido === 'string' ? t.contenido : JSON.stringify(t.contenido||{})
-      };
-    });
-
-    // Usar POST a través del Apps Script (evita límite de URL con caracteres especiales)
-    drivePostViaGet(APPS_SCRIPT_URL, {action:'syncAll', data:{temas: temasData}})
-      .then(function(res){
-        if(res && res.ok) resolve(res);
-        else reject(new Error((res&&res.error)||'Error al sincronizar'));
-      })
-      .catch(function(err){
-        reject(err);
-      });
-  });
-}
-
-// ═══════════════════════════════════════════════════════════
-//  MEJORA 1: CONTINUAR DONDE LO DEJÉ
-// ═══════════════════════════════════════════════════════════
-function actualizarBtnContinuar(){
-  var box = document.getElementById('continuarBox');
-  var sub = document.getElementById('continuarSub');
-  if(!box || db.temas.length === 0){ if(box) box.style.display='none'; return; }
-
-  // Buscar el último tema visto o el primer tema sin completar del nivel/grado actual
-  var key = 'af_ultimo_tema';
-  var ultimoId = localStorage.getItem(key);
-  var temasFiltrados = db.temas.filter(function(t){
-    return (t.nivel||'').toLowerCase()===currentNivel && parseInt(t.grado)===currentGrado;
-  });
-  if(temasFiltrados.length === 0){ box.style.display='none'; return; }
-
-  // Buscar primer tema incompleto
-  var progreso = {};
-  try{
-    var raw = localStorage.getItem('af_progreso');
-    if(raw) progreso = JSON.parse(raw);
-  }catch(e){}
-
-  var siguienteTema = null;
-
-  // Primero: si hay un último tema visto, buscar el siguiente después de ese
-  if(ultimoId){
-    var idx = temasFiltrados.findIndex(function(t){ return t.id===ultimoId; });
-    if(idx >= 0 && idx < temasFiltrados.length-1){
-      siguienteTema = temasFiltrados[idx+1];
-    }
-  }
-
-  // Si no, buscar el primer tema sin completar
-  if(!siguienteTema){
-    siguienteTema = temasFiltrados.find(function(t){
-      return !progreso[t.id] || (progreso[t.id].pct||0) < 50;
-    }) || temasFiltrados[0];
-  }
-
-  if(!siguienteTema){ box.style.display='none'; return; }
-
-  // Mostrar el botón con info del siguiente tema
-  box.style.display = 'block';
-  var completados = temasFiltrados.filter(function(t){
-    return progreso[t.id] && (progreso[t.id].pct||0) >= 50;
-  }).length;
-  var pct = Math.round(completados/temasFiltrados.length*100);
-
-  if(sub) sub.textContent = '📚 '+siguienteTema.titulo+' · '+completados+'/'+temasFiltrados.length+' completados ('+pct+'%)';
-  box._nextTemaId = siguienteTema.id;
-}
-
-function continuarAprendizaje(){
-  var box = document.getElementById('continuarBox');
-  if(!box || !box._nextTemaId){ return; }
-  var tema = db.temas.find(function(t){ return t.id===box._nextTemaId; });
-  if(tema){
-    // Cambiar a nivel/grado correcto si es diferente
-    if(tema.nivel !== currentNivel) setNivel(tema.nivel);
-    if(parseInt(tema.grado) !== currentGrado) setGrado(parseInt(tema.grado));
-    verLeccion(tema.id);
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-//  MEJORA 2: CELEBRACIÓN AL TERMINAR UN TEMA
-// ═══════════════════════════════════════════════════════════
-
-var _puntosAcumulados = 0;
-
-function celebrarTemaCompletado(tema, nota){
-  nota = nota || 100;
-
-  // Puntos según la nota
-  var puntos = nota >= 90 ? 30 : nota >= 70 ? 20 : nota >= 50 ? 10 : 5;
-  _puntosAcumulados += puntos;
-
-  // Mensaje motivador según nivel
-  var mensajes = {
-    inicial: ['¡Genial! 🌟','¡Muy bien! 🎉','¡Excelente! 🦋','¡Lo lograste! ⭐'],
-    primaria: ['¡Excelente trabajo! 🚀','¡Eres un crack! 💪','¡Sigue así! 🔥','¡Increíble! 🏆'],
-    secundaria: ['¡Muy bien logrado! 💡','¡Sólido conocimiento! 🎯','¡Dominas el tema! 🧠','¡Excelente! 📚']
-  };
-  var msgs = mensajes[currentNivel] || mensajes.primaria;
-  var msg = msgs[Math.floor(Math.random()*msgs.length)];
-
-  // Lanzar confeti CSS
-  _lanzarConfeti();
-
-  // Sonido de celebración (Web Audio API)
-  _tocarSonidoCelebracion();
-
-  // Toast especial con puntos
-  _mostrarToastCelebracion(msg, puntos, nota);
-
-  // Verificar logros
-  try{ checkLogros(); }catch(e){}
-}
-
-function _lanzarConfeti(){
-  var container = document.getElementById('confettiContainer');
-  if(!container){
-    container = document.createElement('div');
-    container.id = 'confettiContainer';
-    container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;overflow:hidden';
-    document.body.appendChild(container);
-  }
-  container.innerHTML = '';
-  var colores = ['#6c5ce7','#fd79a8','#fdcb6e','#00b894','#e17055','#a29bfe','#55efc4','#ffeaa7'];
-  for(var i=0; i<60; i++){
-    var p = document.createElement('div');
-    var color = colores[Math.floor(Math.random()*colores.length)];
-    var size  = Math.random()*10+5;
-    var left  = Math.random()*100;
-    var delay = Math.random()*0.8;
-    var dur   = Math.random()*1.5+1.5;
-    var shape = Math.random() > 0.5 ? '50%' : '0';
-    p.style.cssText = 'position:absolute;top:-20px;left:'+left+'%;width:'+size+'px;height:'+size+'px;'+
-      'background:'+color+';border-radius:'+shape+';'+
-      'animation:confettiCaer '+dur+'s '+delay+'s ease-in forwards;'+
-      'transform:rotate('+Math.random()*360+'deg)';
-    container.appendChild(p);
-  }
-  setTimeout(function(){ if(container) container.innerHTML=''; }, 3500);
-}
-
-function _tocarSonidoCelebracion(){
-  try{
-    var ctx = new (window.AudioContext||window.webkitAudioContext)();
-    var notas = [523, 659, 784, 1047]; // Do Mi Sol Do
-    notas.forEach(function(freq, i){
-      var osc  = ctx.createOscillator();
-      var gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.value = freq;
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0.3, ctx.currentTime + i*0.15);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.15 + 0.3);
-      osc.start(ctx.currentTime + i*0.15);
-      osc.stop(ctx.currentTime + i*0.15 + 0.3);
-    });
-  }catch(e){}
-}
-
-function _mostrarToastCelebracion(mensaje, puntos, nota){
-  var toast = document.getElementById('toastCelebracion');
-  if(!toast){
-    toast = document.createElement('div');
-    toast.id = 'toastCelebracion';
-    toast.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);'+
-      'background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;'+
-      'border-radius:20px;padding:14px 24px;font-size:14px;font-weight:800;'+
-      'box-shadow:0 8px 30px rgba(108,92,231,.5);z-index:10000;'+
-      'opacity:0;transition:all .4s ease;text-align:center;min-width:220px;pointer-events:none';
-    document.body.appendChild(toast);
-  }
-  toast.innerHTML = '<div style="font-size:22px;margin-bottom:4px">'+mensaje+'</div>'+
-    '<div style="font-size:12px;opacity:.9">+'+puntos+' puntos ⭐</div>';
-  toast.style.opacity = '1';
-  toast.style.transform = 'translateX(-50%) translateY(0)';
-  setTimeout(function(){
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(-50%) translateY(-20px)';
-  }, 2500);
-}
-
-// ── Aplicar clase de nivel al body ───────────────────────
-function aplicarClaseNivel(nivel){
-  document.body.classList.remove('nivel-inicial','nivel-primaria','nivel-secundaria');
-  document.body.classList.add('nivel-'+(nivel||'primaria'));
-}
-
-// ═══════════════════════════════════════════════════════════
-//  MEJORA 4: RACHA DIARIA
-// ═══════════════════════════════════════════════════════════
-
-function actualizarRacha(){
-  var hoy  = new Date().toDateString();
-  var ayer = new Date(Date.now()-86400000).toDateString();
-
-  try{
-    var rachaData = JSON.parse(localStorage.getItem('af_racha')||'{"dias":0,"ultima":""}');
-    var ultima = rachaData.ultima;
-
-    if(ultima === hoy){
-      // Ya se registró hoy — no hacer nada
-      return rachaData.dias;
-    } else if(ultima === ayer){
-      // Continuó la racha
-      rachaData.dias++;
-    } else if(!ultima){
-      // Primera vez
-      rachaData.dias = 1;
-    } else {
-      // Se rompió la racha
-      var diasPerdidos = Math.round((new Date(hoy) - new Date(ultima))/(86400000));
-      if(diasPerdidos > 1){
-        var rachaAnterior = rachaData.dias;
-        rachaData.dias = 1;
-        // Notificar si tenía una racha buena
-        if(rachaAnterior >= 3){
-          setTimeout(function(){
-            showToast('😔 Rompiste tu racha de '+rachaAnterior+' días. ¡Empieza de nuevo!');
-          }, 2000);
-        }
-      } else {
-        rachaData.dias = 1;
-      }
-    }
-    rachaData.ultima = hoy;
-    localStorage.setItem('af_racha', JSON.stringify(rachaData));
-
-    // Mostrar celebración si llega a hito
-    if([3,7,14,30,60,100].indexOf(rachaData.dias) >= 0){
-      setTimeout(function(){
-        _lanzarConfeti();
-        _tocarSonidoCelebracion();
-        Swal.fire({
-          icon:'success',
-          title:'🔥 ¡'+rachaData.dias+' días seguidos!',
-          html:'<p style="font-size:15px">¡Increíble constancia! Llevas <b>'+rachaData.dias+' días</b> estudiando sin parar.</p>'+
-            '<p style="font-size:13px;color:#888">La constancia es la clave del éxito 💪</p>',
-          confirmButtonColor:'#6c5ce7',
-          timer: 4000,
-          timerProgressBar: true
-        });
-      }, 1000);
-    }
-    return rachaData.dias;
-  }catch(e){ return 0; }
-}
-
-function obtenerRacha(){
-  try{
-    var rachaData = JSON.parse(localStorage.getItem('af_racha')||'{"dias":0}');
-    return rachaData.dias || 0;
-  }catch(e){ return 0; }
-}
-
-// Widget de racha visible en el dashboard
 function mostrarWidgetRacha(){
   var widget = document.getElementById('rachaWidget');
   if(!widget) return;
